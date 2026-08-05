@@ -23,7 +23,7 @@ function normalizePhone(raw: string): { value: string; error: string | null } {
 
 export function OutboundCallWidget() {
   const [step, setStep] = useState<Step>("phone");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState("+");
   const [code, setCode] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -84,7 +84,7 @@ export function OutboundCallWidget() {
 
   const reset = () => {
     setStep("phone");
-    setPhone("");
+    setPhone("+");
     setCode("");
     setErrorMessage("");
   };
@@ -108,7 +108,7 @@ export function OutboundCallWidget() {
           />
           <button
             onClick={sendCode}
-            disabled={loading || !phone || !apiConfigured}
+            disabled={loading || phone.replace(/\D/g, "").length < 7 || !apiConfigured}
             className="rounded-full bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loading ? "Sending…" : "Send code"}
