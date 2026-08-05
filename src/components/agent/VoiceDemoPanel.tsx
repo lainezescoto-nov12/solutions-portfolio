@@ -1,30 +1,52 @@
+"use client";
+
+import { useState } from "react";
 import type { Agent } from "@/lib/agents";
 import { OutboundCallWidget } from "@/components/agent/OutboundCallWidget";
 
+const PHONE_DISPLAY = "(984) 388-9822";
+const PHONE_RAW = "+19843889822";
+
+function CopyNumber() {
+  const [copied, setCopied] = useState(false);
+
+  return (
+    <button
+      onClick={() => {
+        navigator.clipboard.writeText(PHONE_RAW);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }}
+      className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:border-neutral-400 hover:text-neutral-950"
+    >
+      {copied ? "Copied!" : `${PHONE_DISPLAY} — copy number`}
+    </button>
+  );
+}
+
 export function VoiceDemoPanel({ agent }: { agent: Agent }) {
+  void agent;
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white p-6">
       <p className="text-sm font-semibold text-neutral-950">
-        Talk to it right now
+        Have it call you
       </p>
       <p className="mt-2 text-sm text-neutral-600">
-        This agent runs on a real Twilio number. Call it directly, or drop
-        your number below and it will call you — a one-time code confirms
-        it&apos;s really your number first.
+        Drop your number below — a one-time code confirms it&apos;s really
+        yours, then the real agent calls you.
       </p>
-      <div className="mt-4">
-        <a
-          href={agent.externalUrl ?? "#"}
-          className="rounded-full bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800"
-        >
-          Call Ridgeline Auto Group — (984) 388-9822
-        </a>
-      </div>
+      <OutboundCallWidget />
+
       <div className="mt-6 border-t border-neutral-200 pt-6">
         <p className="text-sm font-semibold text-neutral-950">
-          Or have it call you
+          Or call it yourself
         </p>
-        <OutboundCallWidget />
+        <p className="mt-2 text-sm text-neutral-600">
+          This runs on a real Twilio number — call it from your own phone.
+        </p>
+        <div className="mt-4">
+          <CopyNumber />
+        </div>
       </div>
     </div>
   );
