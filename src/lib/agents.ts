@@ -46,7 +46,7 @@ export const agents: Agent[] = [
       { label: "Ask a FAQ", prompt: "\"Do you offer loaner cars while mine's in the shop?\"" },
       { label: "Vehicle lookup", prompt: "\"Is there a recall on my 2019 Hyundai Sonata?\"" },
     ],
-    externalUrl: "#",
+    externalUrl: "tel:+19843889822",
   },
   {
     slug: "chat",
