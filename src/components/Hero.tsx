@@ -15,6 +15,9 @@ export function Hero() {
         <p className="mb-4 text-sm font-medium uppercase tracking-widest text-white/60">
           Solutions Portfolio
         </p>
+        <p className="mb-3 text-lg font-semibold text-white/80">
+          Jose Luis Lainez
+        </p>
         <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">
           Three AI agents. Three different stories.
         </h1>
