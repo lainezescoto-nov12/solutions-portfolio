@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Agent } from "@/lib/agents";
-import { OutboundCallWidget } from "@/components/agent/OutboundCallWidget";
+import { PhoneCallModal } from "@/components/agent/PhoneCallModal";
 
 const PHONE_DISPLAY = "(984) 388-9822";
 const PHONE_RAW = "+19843889822";
@@ -26,16 +26,25 @@ function CopyNumber() {
 
 export function VoiceDemoPanel({ agent }: { agent: Agent }) {
   void agent;
+  const [callOpen, setCallOpen] = useState(false);
+
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white p-6">
       <p className="text-sm font-semibold text-neutral-950">
         Have it call you
       </p>
       <p className="mt-2 text-sm text-neutral-600">
-        Drop your number below — a one-time code confirms it&apos;s really
-        yours, then the real agent calls you.
+        Drop your number in and a one-time code confirms it&apos;s really
+        yours — then the real agent calls, live.
       </p>
-      <OutboundCallWidget />
+      <button
+        onClick={() => setCallOpen(true)}
+        className="mt-4 rounded-full bg-neutral-950 px-6 py-3 text-sm font-semibold text-white hover:bg-neutral-800"
+      >
+        Run the demo
+      </button>
+
+      {callOpen && <PhoneCallModal onClose={() => setCallOpen(false)} />}
 
       <div className="mt-6 border-t border-neutral-200 pt-6">
         <p className="text-sm font-semibold text-neutral-950">

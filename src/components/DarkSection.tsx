@@ -8,21 +8,13 @@ export function DarkSection() {
         <h2 className="max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
           Every agent here runs on real infrastructure, not a scripted demo.
         </h2>
-        <div className="mt-12 grid gap-10 sm:grid-cols-3">
+        <div className="mt-12 grid gap-10 sm:grid-cols-2">
           <div>
             <h3 className="text-lg font-semibold">Real tool-calling</h3>
             <p className="mt-2 text-sm text-white/60">
               Each agent calls actual MCP tools against a backend — Firestore
               for data, Google Calendar and Gmail for the voice agent — not
               hard-coded response text.
-            </p>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">Mocked, not faked, data</h3>
-            <p className="mt-2 text-sm text-white/60">
-              Where there's no live business system to connect to (no
-              ShipStation, no device fleet), the data is seeded and realistic,
-              but the agent logic and state changes are genuine.
             </p>
           </div>
           <div>

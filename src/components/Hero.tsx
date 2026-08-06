@@ -14,12 +14,11 @@ export function Hero() {
           Solutions Portfolio
         </p>
         <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">
-          Three AI agents, built to be talked to — not read about.
+          Three AI agents. Three different stories.
         </h1>
         <p className="mt-6 max-w-2xl text-lg text-white/70 sm:text-xl">
           Click into a voice, chat, or email agent and run it yourself. Real
-          tool-calling, real backends, mocked business data — every
-          interaction here is something you can actually try.
+          tool-calling, real backends, workflows you can follow end to end.
         </p>
         <div className="mt-10 flex flex-wrap gap-4">
           <a

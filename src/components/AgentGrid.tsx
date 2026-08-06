@@ -12,11 +12,11 @@ export function AgentGrid() {
     <section id="agents" className="mx-auto max-w-6xl px-6 py-24">
       <div className="mb-12 max-w-2xl">
         <h2 className="text-3xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
-          Pick an agent
+          Choose an agent
         </h2>
         <p className="mt-4 text-lg text-neutral-600">
-          Each one solves a different job. Click in to see the use case,
-          sample prompts, and try it yourself.
+          Each one solves a different business problem. Click to explore the
+          use cases and how these AI agents tackle real customer pain points.
         </p>
       </div>
       <div className="grid gap-6 sm:grid-cols-3">

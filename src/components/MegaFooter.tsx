@@ -10,19 +10,31 @@ const columns = [
     title: "About",
     links: [
       { label: "How this was built", href: "/#about" },
-      { label: "Tech stack", href: "/#about" },
+      { label: "Experience", href: "/experience" },
       { label: "Contact", href: "mailto:lainezescoto@gmail.com" },
     ],
   },
   {
     title: "Elsewhere",
     links: [
-      { label: "GitHub", href: "#" },
-      { label: "LinkedIn", href: "#" },
-      { label: "Resume", href: "#" },
+      {
+        label: "GitHub",
+        href: "https://github.com/lainezescoto-nov12/solutions-portfolio",
+      },
+      {
+        label: "LinkedIn",
+        href: "https://www.linkedin.com/in/jose-luis-alejandro-lainez-escoto-b95211149",
+      },
+      // TODO: point at an actual resume file (PDF) once we have one to
+      // host — for now this reuses the Experience page as a web resume.
+      { label: "Resume", href: "/experience" },
     ],
   },
 ];
+
+function isExternal(href: string) {
+  return href.startsWith("http");
+}
 
 export function MegaFooter() {
   return (
@@ -43,16 +55,29 @@ export function MegaFooter() {
                 {col.title}
               </p>
               <ul className="mt-4 space-y-3">
-                {col.links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-neutral-500 hover:text-neutral-900"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
+                {col.links.map((link) =>
+                  isExternal(link.href) ? (
+                    <li key={link.label}>
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-neutral-500 hover:text-neutral-900"
+                      >
+                        {link.label}
+                      </a>
+                    </li>
+                  ) : (
+                    <li key={link.label}>
+                      <Link
+                        href={link.href}
+                        className="text-sm text-neutral-500 hover:text-neutral-900"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  )
+                )}
               </ul>
             </div>
           ))}

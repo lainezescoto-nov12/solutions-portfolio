@@ -29,11 +29,11 @@ export const agents: Agent[] = [
     slug: "voice",
     name: "Voice",
     industry: "Ridgeline Auto Group — Automotive",
-    tagline: "A phone-answering agent that books, cancels, and follows up like a real service advisor.",
+    tagline: "An AI voice agent that books, cancels, and reschedules appointments — and handles customer support like a real service advisor.",
     status: "live",
     statusLabel: "Live — deployed on Cloud Run",
     summary:
-      "Calls a real Twilio number and talks to an ElevenLabs voice agent (Claude Haiku 4.5, English + Spanish) backed by a 10-tool FastMCP server. It reads and writes real Google Calendar and Gmail data through Firestore, so a booking made on the call sends a real confirmation email and shows up on the calendar.",
+      "A customer calls asking to book a service appointment. The agent checks real availability, books the slot, and sends a confirmation — the customer sees it land on their Gmail calendar within seconds, no hold music, no hand-off to a human. Ask it to reschedule later and it finds that same booking and moves it, just as easily.",
     stats: [
       { label: "Tools wired", value: "10" },
       { label: "Languages", value: "2" },
@@ -41,9 +41,9 @@ export const agents: Agent[] = [
     ],
     stack: ["FastMCP", "Cloud Run", "ElevenLabs", "Claude Haiku 4.5", "Twilio", "Firestore", "Google Calendar/Gmail API"],
     samplePrompts: [
-      { label: "Book an appointment", prompt: "\"I need to bring my Camry in for an oil change next Tuesday afternoon.\"" },
-      { label: "Cancel across sessions", prompt: "\"I booked something last week, can you cancel it?\"" },
-      { label: "Ask a FAQ", prompt: "\"Do you offer loaner cars while mine's in the shop?\"" },
+      { label: "FAQ + booking", prompt: "\"What are your service department hours? I'd like to book a test drive for a Toyota Tundra — do you have anything open tomorrow?\"" },
+      { label: "Parts availability", prompt: "\"Do you have brake pads in stock for a 2019 Toyota Camry?\"" },
+      { label: "Reschedule", prompt: "\"Hi, I need to move my appointment to a different time.\"" },
       { label: "Vehicle lookup", prompt: "\"Is there a recall on my 2019 Hyundai Sonata?\"" },
     ],
     externalUrl: "tel:+19843889822",
@@ -52,7 +52,7 @@ export const agents: Agent[] = [
     slug: "chat",
     name: "Chat",
     industry: "IoT Device Company (placeholder)",
-    tagline: "Helps a customer pick the right device, then walks them through fixing it when it breaks.",
+    tagline: "A chat AI agent that provides product recommendations and troubleshooting guidance when needed.",
     status: "in-progress",
     statusLabel: "In progress — knowledge base + chat UI",
     summary:
@@ -73,11 +73,11 @@ export const agents: Agent[] = [
     slug: "email",
     name: "Email",
     industry: "E-commerce Order Editing",
-    tagline: "Reads a customer's email, finds their order, and makes the edit — watch it happen live.",
+    tagline: "A proactive AI agent that edits a customer's order before it ships and turns into a bad experience — watch it live.",
     status: "in-progress",
     statusLabel: "In progress — order panel + agent logic",
     summary:
-      "An email agent that parses an incoming request (address change, item cancellation, quantity update), looks up the customer's order history, and applies the edit through tool calls. Since there's no live ShipStation/Shopify instance to point at, a live Order History Panel mirrors the state change in the browser as the agent processes the email — that's the actual demo moment.",
+      "Before a shipping mistake turns into a customer complaint, this agent catches it. It reads an incoming email requesting a change — a new address, a cancelled item, a fixed quantity — finds the order, and applies the edit automatically. A live Order History Panel mirrors the change in the browser as it happens, so you watch it happen instead of trusting a screenshot.",
     stats: [
       { label: "Use cases", value: "3" },
       { label: "Backend", value: "Firestore + MCP" },
