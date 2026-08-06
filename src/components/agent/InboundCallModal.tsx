@@ -14,6 +14,40 @@ const BAR_COUNT = 24;
 
 type Status = "idle" | "connecting" | "connected" | "ended" | "error";
 
+type ToolActivity = {
+  id: string;
+  label: string;
+  doneLabel: string;
+  errorLabel: string;
+  state: "running" | "done" | "error";
+};
+
+// Friendly copy for each real tool the agent can call, keyed by the exact
+// tool name registered on the MCP server — shown live in the "Behind the
+// scenes" panel so a visitor can see the agent is actually hitting real
+// systems (Calendar, Firestore, n8n), not just generating plausible text.
+const TOOL_COPY: Record<string, { label: string; doneLabel: string }> = {
+  check_availability: { label: "Checking appointment availability…", doneLabel: "Open times found" },
+  book_appointment: { label: "Booking your appointment…", doneLabel: "Appointment booked" },
+  reschedule_appointment: { label: "Rescheduling your appointment…", doneLabel: "Appointment rescheduled" },
+  cancel_appointment: { label: "Cancelling your appointment…", doneLabel: "Appointment cancelled" },
+  find_appointment: { label: "Looking up your appointment…", doneLabel: "Appointment located" },
+  intake_trade_in: { label: "Calculating your trade-in value…", doneLabel: "Trade-in estimate ready" },
+  check_vehicle_status: { label: "Checking vehicle status…", doneLabel: "Vehicle status retrieved" },
+  dealership_faq_lookup: { label: "Checking our knowledge base…", doneLabel: "Answer found" },
+  check_part_availability: { label: "Checking parts inventory…", doneLabel: "Parts availability checked" },
+  trigger_outbound_reminder: { label: "Placing outbound call…", doneLabel: "Call placed" },
+};
+
+function toolCopyFor(toolName: string) {
+  return (
+    TOOL_COPY[toolName] ?? {
+      label: `Calling ${toolName}…`,
+      doneLabel: `${toolName} completed`,
+    }
+  );
+}
+
 // Real browser-to-agent call over WebRTC via ElevenLabs' client SDK —
 // no phone number, no tel: link, no OS "open app?" prompt. Just mic
 // permission and a live conversation with the actual Ridgeline agent.
@@ -34,6 +68,7 @@ export function InboundCallModal({
   const [speaking, setSpeaking] = useState(false);
   const [levels, setLevels] = useState<number[] | undefined>(undefined);
   const [mounted, setMounted] = useState(false);
+  const [toolActivity, setToolActivity] = useState<ToolActivity[]>([]);
 
   const conversationRef = useRef<Awaited<ReturnType<typeof Conversation.startSession>> | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -106,6 +141,7 @@ export function InboundCallModal({
   const startCall = async () => {
     setStatus("connecting");
     setErrorMessage("");
+    setToolActivity([]);
     try {
       // Ask for the mic explicitly so a denial surfaces as a clear error
       // instead of failing inside the SDK's connection handshake.
@@ -130,6 +166,28 @@ export function InboundCallModal({
         },
         onModeChange: (m: { mode: string }) => {
           setSpeaking(m?.mode === "speaking");
+        },
+        onAgentToolRequest: (props: { tool_name: string; tool_call_id: string }) => {
+          const copy = toolCopyFor(props.tool_name);
+          setToolActivity((prev) => [
+            ...prev,
+            {
+              id: props.tool_call_id,
+              label: copy.label,
+              doneLabel: copy.doneLabel,
+              errorLabel: "Something went wrong with that lookup",
+              state: "running",
+            },
+          ]);
+        },
+        onAgentToolResponse: (props: { tool_call_id: string; is_error: boolean }) => {
+          setToolActivity((prev) =>
+            prev.map((entry) =>
+              entry.id === props.tool_call_id
+                ? { ...entry, state: props.is_error ? "error" : "done" }
+                : entry
+            )
+          );
         },
       });
       conversationRef.current = conversation;
@@ -198,6 +256,41 @@ export function InboundCallModal({
             <p className="mt-2 max-w-[260px] text-center text-xs text-red-400">
               {errorMessage}
             </p>
+          )}
+
+          {toolActivity.length > 0 && (
+            <div className="mt-6 w-full max-w-xs rounded-xl border border-white/10 bg-white/5 p-3">
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-white/35">
+                Behind the scenes
+              </p>
+              <ul className="flex flex-col gap-1.5">
+                {toolActivity.slice(-5).map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="flex items-center gap-2 text-xs text-white/70 animate-[fadeIn_0.25s_ease-out]"
+                  >
+                    <span className="flex h-3.5 w-3.5 flex-none items-center justify-center">
+                      {entry.state === "running" && (
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-amber-400" />
+                      )}
+                      {entry.state === "done" && (
+                        <span className="text-emerald-400">✓</span>
+                      )}
+                      {entry.state === "error" && (
+                        <span className="text-red-400">!</span>
+                      )}
+                    </span>
+                    <span>
+                      {entry.state === "running"
+                        ? entry.label
+                        : entry.state === "done"
+                          ? entry.doneLabel
+                          : entry.errorLabel}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {(status === "idle" || status === "ended" || status === "error") && (
