@@ -311,6 +311,11 @@ export function InboundCallModal({
               End call
             </button>
           )}
+
+          <p className="mt-8 max-w-xs text-center text-[11px] text-white/30">
+            Every tool call you see is real — live inventory, live calendar,
+            live email. Your browser will ask for microphone permission.
+          </p>
         </div>
 
         {/* Right: the same sample prompts as the page, kept fully
