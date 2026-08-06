@@ -311,11 +311,6 @@ export function InboundCallModal({
               End call
             </button>
           )}
-
-          <p className="mt-8 text-center text-[11px] text-white/30">
-            Runs entirely in your browser over WebRTC — no phone number, no
-            app, just your microphone.
-          </p>
         </div>
 
         {/* Right: the same sample prompts as the page, kept fully
