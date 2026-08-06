@@ -126,7 +126,7 @@ export default function ExperiencePage() {
             ← Back home
           </Link>
           <p className="mt-8 text-sm font-medium uppercase tracking-widest text-white/60">
-            Experience
+            Resume
           </p>
           <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">
             Jose Luis Lainez

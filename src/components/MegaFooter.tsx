@@ -10,7 +10,7 @@ const columns = [
     title: "About",
     links: [
       { label: "How this was built", href: "/#about" },
-      { label: "Experience", href: "/experience" },
+      { label: "Resume", href: "/experience" },
       { label: "Contact", href: "mailto:lainezescoto@gmail.com" },
     ],
   },
@@ -25,9 +25,6 @@ const columns = [
         label: "LinkedIn",
         href: "https://www.linkedin.com/in/jose-luis-alejandro-lainez-escoto-b95211149",
       },
-      // TODO: point at an actual resume file (PDF) once we have one to
-      // host — for now this reuses the Experience page as a web resume.
-      { label: "Resume", href: "/experience" },
     ],
   },
 ];

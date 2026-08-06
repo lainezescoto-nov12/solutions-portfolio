@@ -43,7 +43,7 @@ export function Hero() {
             href="/experience"
             className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/60"
           >
-            Resumé
+            Resume
           </Link>
         </div>
       </div>
