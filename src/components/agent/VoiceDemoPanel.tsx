@@ -26,7 +26,6 @@ function CopyNumber() {
 }
 
 export function VoiceDemoPanel({ agent }: { agent: Agent }) {
-  void agent;
   const [outboundOpen, setOutboundOpen] = useState(false);
   const [inboundOpen, setInboundOpen] = useState(false);
 
@@ -73,7 +72,12 @@ export function VoiceDemoPanel({ agent }: { agent: Agent }) {
         </div>
       </div>
 
-      {inboundOpen && <InboundCallModal onClose={() => setInboundOpen(false)} />}
+      {inboundOpen && (
+        <InboundCallModal
+          onClose={() => setInboundOpen(false)}
+          prompts={agent.samplePrompts}
+        />
+      )}
     </div>
   );
 }
