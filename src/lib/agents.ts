@@ -37,7 +37,7 @@ export const agents: Agent[] = [
       "A customer calls asking to book a service appointment. The agent checks real availability, books the slot, and sends a confirmation — the customer sees it land on their Gmail calendar within seconds, no hold music, no hand-off to a human. Ask it to reschedule later and it finds that same booking and moves it, just as easily.",
     stats: [
       { label: "Tools wired", value: "10" },
-      { label: "Languages", value: "2" },
+      { label: "Languages", value: "English + Spanish" },
       { label: "Confirmed bookings", value: "Live" },
     ],
     stack: ["FastMCP", "Cloud Run", "ElevenLabs", "Claude Haiku 4.5", "Twilio", "Firestore", "Google Calendar/Gmail API"],
