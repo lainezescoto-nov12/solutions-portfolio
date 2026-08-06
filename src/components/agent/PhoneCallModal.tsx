@@ -109,7 +109,10 @@ export function PhoneCallModal({ onClose }: { onClose: () => void }) {
           ×
         </button>
 
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-blue-600 text-2xl font-semibold">
+        <div
+          className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-semibold"
+          style={{ background: "linear-gradient(135deg, #146EF5 0%, #0a2472 100%)" }}
+        >
           RA
         </div>
         <p className="mt-4 text-lg font-semibold">Ridgeline Auto Group</p>
@@ -141,7 +144,8 @@ export function PhoneCallModal({ onClose }: { onClose: () => void }) {
             <button
               onClick={sendCode}
               disabled={loading || phone.replace(/\D/g, "").length < 7 || !apiConfigured}
-              className="w-full rounded-full bg-white px-5 py-3 text-sm font-semibold text-neutral-950 hover:bg-white/90 disabled:opacity-30"
+              className="w-full rounded-full px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-30"
+              style={{ backgroundColor: "#146EF5" }}
             >
               {loading ? "Sending…" : "Send code"}
             </button>
@@ -161,7 +165,8 @@ export function PhoneCallModal({ onClose }: { onClose: () => void }) {
             <button
               onClick={verifyAndCall}
               disabled={loading || !code}
-              className="w-full rounded-full bg-white px-5 py-3 text-sm font-semibold text-neutral-950 hover:bg-white/90 disabled:opacity-30"
+              className="w-full rounded-full px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-30"
+              style={{ backgroundColor: "#146EF5" }}
             >
               {loading ? "Verifying…" : "Verify & call me"}
             </button>

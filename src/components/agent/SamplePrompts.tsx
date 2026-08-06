@@ -4,7 +4,7 @@ export function SamplePrompts({ prompts }: { prompts: SamplePrompt[] }) {
   return (
     <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
       <p className="text-sm font-semibold text-neutral-950">
-        Try saying / sending
+        You can ask the following questions
       </p>
       <ul className="mt-4 space-y-4">
         {prompts.map((p) => (

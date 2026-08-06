@@ -6,7 +6,7 @@ export function Hero() {
         className="pointer-events-none absolute inset-0 opacity-90"
         style={{
           background:
-            "radial-gradient(60% 60% at 20% 20%, #6d28d9 0%, transparent 60%), radial-gradient(50% 50% at 80% 30%, #2563eb 0%, transparent 60%), radial-gradient(60% 60% at 50% 90%, #db2777 0%, transparent 55%)",
+            "radial-gradient(60% 60% at 20% 15%, #146EF5 0%, transparent 60%), radial-gradient(55% 55% at 85% 25%, #1d4ed8 0%, transparent 60%), radial-gradient(70% 70% at 50% 100%, #0a2472 0%, transparent 55%)",
         }}
       />
       <div className="relative mx-auto max-w-6xl px-6 pt-28 pb-24 sm:pt-36 sm:pb-32">
@@ -23,7 +23,8 @@ export function Hero() {
         <div className="mt-10 flex flex-wrap gap-4">
           <a
             href="#agents"
-            className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-white/90"
+            className="rounded-full px-6 py-3 text-sm font-semibold text-white transition hover:brightness-110"
+            style={{ backgroundColor: "#146EF5" }}
           >
             Try an agent
           </a>

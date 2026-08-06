@@ -2,9 +2,9 @@ import Link from "next/link";
 import { agents } from "@/lib/agents";
 
 const gradients: Record<string, string> = {
-  voice: "from-violet-600 to-blue-600",
-  chat: "from-blue-600 to-cyan-500",
-  email: "from-pink-600 to-orange-500",
+  voice: "from-blue-600 to-blue-950",
+  chat: "from-slate-500 to-slate-900",
+  email: "from-blue-400 to-slate-800",
 };
 
 export function AgentGrid() {

@@ -26,6 +26,19 @@ export function AgentHeader({ agent }: { agent: Agent }) {
           {agent.industry}
         </p>
         <p className="mt-6 max-w-2xl text-lg text-white/70">{agent.summary}</p>
+        {agent.liveCapabilities && agent.liveCapabilities.length > 0 && (
+          <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
+            {agent.liveCapabilities.map((cap) => (
+              <li
+                key={cap}
+                className="flex items-center gap-2 text-sm text-white/70"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                {cap}
+              </li>
+            ))}
+          </ul>
+        )}
         <div className="mt-8 flex flex-wrap gap-2">
           {agent.stack.map((s) => (
             <span
