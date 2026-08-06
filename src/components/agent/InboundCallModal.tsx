@@ -46,6 +46,16 @@ export function InboundCallModal({
     return () => cancelAnimationFrame(id);
   }, []);
 
+  useEffect(() => {
+    // Lock page scroll while this is open -- otherwise the page behind
+    // a full-screen takeover keeps scrolling, which is disorienting.
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
   const stopVisualizer = useCallback(() => {
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
@@ -148,19 +158,14 @@ export function InboundCallModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col justify-end">
-      {/* Click-outside strip above the sheet — deliberately not a full
-          blurred overlay, so the page (and its own sample prompts, if
-          the sheet is ever shown on a narrow viewport) stays legible. */}
-      <div className="flex-1" onClick={handleClose} />
-
+    <div className="fixed inset-0 z-[60] h-[100dvh] w-screen overflow-hidden">
       <div
-        className={`flex max-h-[85vh] w-full flex-col overflow-hidden rounded-t-[2rem] border-t border-neutral-200 bg-white shadow-2xl transition-transform duration-300 ease-out sm:flex-row ${
+        className={`flex h-full w-full flex-col overflow-hidden bg-white shadow-2xl transition-transform duration-300 ease-out sm:flex-row ${
           mounted ? "translate-y-0" : "translate-y-full"
         }`}
       >
         {/* Left: the call UI */}
-        <div className="relative flex flex-1 flex-col items-center bg-gradient-to-b from-neutral-900 to-neutral-950 px-8 py-10 text-white sm:w-1/2 sm:flex-none">
+        <div className="relative flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-neutral-900 to-neutral-950 px-8 py-10 text-white sm:w-1/2 sm:flex-none">
           <button
             onClick={handleClose}
             aria-label="Close"
