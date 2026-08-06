@@ -44,9 +44,10 @@ export const agents: Agent[] = [
     liveCapabilities: ["Booking confirmations and cancellations", "Customer support"],
     samplePrompts: [
       { label: "FAQ + booking", prompt: "\"What are your service department hours? I'd like to book a test drive for a Toyota Tundra — do you have anything open tomorrow?\"" },
-      { label: "Parts availability", prompt: "\"Do you have brake pads in stock for a 2019 Toyota Camry?\"" },
       { label: "Reschedule an existing booking", prompt: "\"Hi, I need to move my appointment to a different time.\"" },
       { label: "Reschedule, cold call", prompt: "\"Hi, I think I have a test drive booked but I don't have the confirmation handy — can you move it to Friday?\"" },
+      { label: "Cancel an appointment", prompt: "\"I need to cancel my appointment for Friday.\"" },
+      { label: "Parts availability", prompt: "\"Do you have brake pads in stock for a 2019 Toyota Camry?\"" },
       { label: "Vehicle lookup", prompt: "\"Is there a recall on my 2019 Hyundai Sonata?\"" },
     ],
     externalUrl: "tel:+19843889822",
