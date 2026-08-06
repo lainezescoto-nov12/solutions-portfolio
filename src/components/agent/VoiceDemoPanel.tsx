@@ -54,8 +54,8 @@ export function VoiceDemoPanel({ agent }: { agent: Agent }) {
           Call and speak to Ridgeline&apos;s AI Agent
         </p>
         <p className="mt-2 text-sm text-neutral-600">
-          This runs on a real Twilio number — call it yourself, no
-          verification needed since you&apos;re the one dialing.
+          Talk to the real agent right in your browser over WebRTC — no
+          phone number, no app, just your microphone.
         </p>
         <button
           onClick={() => setInboundOpen(true)}
@@ -64,7 +64,11 @@ export function VoiceDemoPanel({ agent }: { agent: Agent }) {
         >
           Run the demo
         </button>
-        <div className="mt-3">
+        <p className="mt-4 text-xs text-neutral-500">
+          Prefer an actual phone call instead? This same agent also runs
+          on a real Twilio number:
+        </p>
+        <div className="mt-2">
           <CopyNumber />
         </div>
       </div>
