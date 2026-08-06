@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AssistantWidget } from "@/components/AssistantWidget";
 
 export const metadata: Metadata = {
   title: "Solutions Portfolio — Jose Luis Lainez Escoto",
@@ -13,7 +12,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         {children}
-        <AssistantWidget />
       </body>
     </html>
   );
