@@ -12,12 +12,18 @@ const TOOL_LABELS: Record<string, string> = {
   get_policy_answer: "Checking returns & warranty policy",
 };
 
-// Browser-native speech-to-text, not a second ElevenLabs voice agent --
-// the mic transcribes into the same text input that already drives this
-// chat, so it goes through the one existing backend rather than standing
-// up a parallel voice pipeline. Web Speech API needs to be told which
-// language to listen for up front (it can't auto-detect), hence the
-// small EN/ES toggle next to it.
+// Browser-native speech-to-text/text-to-speech, not a second ElevenLabs
+// voice agent -- a spoken message is sent straight through as a chat
+// bubble (never staged in the text input), and once voice mode is on,
+// replies are read aloud too. Still the same Claude tool-calling backend
+// underneath, no parallel voice pipeline.
+//
+// Honest limitation: the Web Speech API has to be told which language to
+// listen for -- it can't detect Spanish vs English from audio the way a
+// server-side pipeline can. There's no visible toggle for that (spoken
+// language switching mid-call isn't something this approach can promise),
+// so recognition defaults to the browser's own language setting. Typed
+// messages remain fully bilingual via the system prompt regardless.
 type SpeechRecognitionLike = {
   lang: string;
   continuous: boolean;
@@ -38,10 +44,13 @@ function getSpeechRecognition(): (new () => SpeechRecognitionLike) | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
-const MIC_LANGUAGES = [
-  { code: "en-US", label: "EN" },
-  { code: "es-ES", label: "ES" },
-];
+function speak(text: string) {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = navigator.language || "en-US";
+  window.speechSynthesis.speak(utterance);
+}
 
 export function ChatDemoPanel() {
   const [messages, setMessages] = useState<Message[]>([
@@ -55,9 +64,9 @@ export function ChatDemoPanel() {
   const [sending, setSending] = useState(false);
   const [lastToolCalls, setLastToolCalls] = useState<ToolCall[]>([]);
   const [error, setError] = useState("");
-  const [micLang, setMicLang] = useState<"en-US" | "es-ES">("en-US");
   const [listening, setListening] = useState(false);
   const [micSupported, setMicSupported] = useState(false);
+  const [voiceModeOn, setVoiceModeOn] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -73,6 +82,12 @@ export function ChatDemoPanel() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, lastToolCalls]);
 
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis?.cancel();
+    };
+  }, []);
+
   function toggleMic() {
     if (listening) {
       recognitionRef.current?.stop();
@@ -83,13 +98,16 @@ export function ChatDemoPanel() {
     if (!SpeechRecognitionCtor) return;
 
     const recognition = new SpeechRecognitionCtor();
-    recognition.lang = micLang;
+    recognition.lang = navigator.language || "en-US";
     recognition.continuous = false;
     recognition.interimResults = false;
 
     recognition.onresult = (event) => {
       const transcript = event.results[0]?.[0]?.transcript;
-      if (transcript) setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+      if (transcript) {
+        setVoiceModeOn(true);
+        send(transcript, true);
+      }
     };
     recognition.onend = () => setListening(false);
     recognition.onerror = () => setListening(false);
@@ -99,7 +117,7 @@ export function ChatDemoPanel() {
     recognition.start();
   }
 
-  async function send(text: string) {
+  async function send(text: string, spoken = false) {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
 
@@ -123,6 +141,7 @@ export function ChatDemoPanel() {
       }
       setLastToolCalls(data.toolCalls ?? []);
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+      if (voiceModeOn || spoken) speak(data.reply);
     } catch {
       setError("Couldn't reach the chat backend.");
     } finally {
@@ -132,15 +151,29 @@ export function ChatDemoPanel() {
 
   return (
     <div className="flex h-[480px] flex-col rounded-2xl border border-neutral-200 bg-white">
-      <div className="flex items-center gap-2.5 border-b border-neutral-200 px-5 py-3">
-        <Image
-          src="/haven-home-tech-logo.png"
-          alt="Haven Home Tech"
-          width={28}
-          height={28}
-          className="rounded-full"
-        />
-        <p className="text-sm font-semibold text-neutral-950">Haven Home Tech</p>
+      <div className="flex items-center justify-between gap-2.5 border-b border-neutral-200 px-5 py-3">
+        <div className="flex items-center gap-2.5">
+          <Image
+            src="/haven-home-tech-logo.png"
+            alt="Haven Home Tech"
+            width={28}
+            height={28}
+            className="rounded-full"
+          />
+          <p className="text-sm font-semibold text-neutral-950">Haven Home Tech</p>
+        </div>
+        {voiceModeOn && (
+          <button
+            type="button"
+            onClick={() => {
+              window.speechSynthesis?.cancel();
+              setVoiceModeOn(false);
+            }}
+            className="rounded-full border border-neutral-200 px-2.5 py-1 text-[11px] font-medium text-neutral-500 hover:text-neutral-900"
+          >
+            🔊 Voice replies on — tap to mute
+          </button>
+        )}
       </div>
 
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-6">
@@ -214,49 +247,31 @@ export function ChatDemoPanel() {
       >
         <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 px-4 py-2.5">
           {micSupported && (
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={toggleMic}
-                disabled={sending}
-                aria-label={listening ? "Stop recording" : "Start voice input"}
-                className={`flex h-7 w-7 flex-none items-center justify-center rounded-full transition ${
-                  listening
-                    ? "bg-red-500 text-white"
-                    : "bg-white text-neutral-500 hover:text-neutral-900"
-                }`}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path
-                    d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="M19 11a7 7 0 0 1-14 0M12 18v3"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
-              <div className="flex overflow-hidden rounded-full border border-neutral-200 text-[10px] font-semibold">
-                {MIC_LANGUAGES.map((l) => (
-                  <button
-                    key={l.code}
-                    type="button"
-                    onClick={() => setMicLang(l.code as "en-US" | "es-ES")}
-                    className={`px-1.5 py-0.5 transition ${
-                      micLang === l.code
-                        ? "bg-neutral-900 text-white"
-                        : "bg-white text-neutral-400 hover:text-neutral-700"
-                    }`}
-                  >
-                    {l.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={toggleMic}
+              disabled={sending}
+              aria-label={listening ? "Stop recording" : "Start voice input"}
+              className={`flex h-7 w-7 flex-none items-center justify-center rounded-full transition ${
+                listening
+                  ? "bg-red-500 text-white"
+                  : "bg-white text-neutral-500 hover:text-neutral-900"
+              }`}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path
+                  d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M19 11a7 7 0 0 1-14 0M12 18v3"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
           )}
           <input
             value={input}
