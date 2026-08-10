@@ -29,11 +29,7 @@ export default async function AgentPage({
       <section className="mx-auto grid max-w-5xl gap-8 px-6 py-16 sm:grid-cols-2">
         <div>
           {agent.slug === "voice" && <VoiceDemoPanel agent={agent} />}
-          {agent.slug === "chat" && (
-            <ComingSoonOverlay>
-              <ChatDemoPanel />
-            </ComingSoonOverlay>
-          )}
+          {agent.slug === "chat" && <ChatDemoPanel />}
           {agent.slug === "email" && (
             <ComingSoonOverlay>
               <EmailDemoPanel />

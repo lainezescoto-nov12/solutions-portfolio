@@ -55,18 +55,18 @@ export const agents: Agent[] = [
   {
     slug: "chat",
     name: "Chat",
-    industry: "IoT Device Company (placeholder)",
+    industry: "Haven Home Tech — Smart Home / IoT",
     tagline: "A chat AI agent that provides product recommendations and troubleshooting guidance when needed.",
-    status: "in-progress",
-    statusLabel: "In progress — knowledge base + chat UI",
+    status: "live",
+    statusLabel: "Live — real Shopify catalog",
     summary:
-      "A chat agent for a smart-device company covering two jobs: recommending the right product for a customer's setup, and troubleshooting connectivity or pairing issues step by step. Backed by a real MCP tool-calling layer over a mocked product catalog and troubleshooting knowledge base seeded in Firestore.",
+      "A chat agent for a smart-home device company covering two jobs: recommending the right product for a customer's setup, and troubleshooting connectivity or pairing issues step by step. Product recommendations query a real Shopify store's live catalog via the Admin API — not mocked data — while troubleshooting guidance comes from a small curated knowledge base.",
     stats: [
       { label: "Use cases", value: "2" },
-      { label: "Backend", value: "Firestore + MCP" },
-      { label: "Data", value: "Mocked catalog" },
+      { label: "Catalog", value: "Live Shopify store" },
+      { label: "Tool-calling", value: "Claude" },
     ],
-    stack: ["Next.js", "MCP tool-calling", "Firestore (mock data)", "Claude"],
+    stack: ["Next.js", "Claude tool-calling", "Shopify Admin API", "Claude Haiku 4.5"],
     samplePrompts: [
       { label: "Product recommendation", prompt: "\"I want a camera for my front porch that works without running new wiring.\"" },
       { label: "Troubleshooting", prompt: "\"My hub shows online but the sensor keeps dropping offline every few hours.\"" },
