@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -131,24 +132,57 @@ export function ChatDemoPanel() {
 
   return (
     <div className="flex h-[480px] flex-col rounded-2xl border border-neutral-200 bg-white">
+      <div className="flex items-center gap-2.5 border-b border-neutral-200 px-5 py-3">
+        <Image
+          src="/haven-home-tech-logo.png"
+          alt="Haven Home Tech"
+          width={28}
+          height={28}
+          className="rounded-full"
+        />
+        <p className="text-sm font-semibold text-neutral-950">Haven Home Tech</p>
+      </div>
+
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-6">
         {messages.map((m, i) => (
           <div
             key={i}
-            className={
-              m.role === "assistant"
-                ? "max-w-[85%] rounded-2xl rounded-tl-sm bg-neutral-100 px-4 py-3 text-sm text-neutral-700"
-                : "ml-auto max-w-[85%] rounded-2xl rounded-tr-sm px-4 py-3 text-sm text-white"
-            }
-            style={m.role === "user" ? { backgroundColor: "#146EF5" } : undefined}
+            className={m.role === "assistant" ? "flex items-end gap-2" : "flex justify-end"}
           >
-            {m.content}
+            {m.role === "assistant" && (
+              <Image
+                src="/haven-home-tech-logo.png"
+                alt=""
+                width={22}
+                height={22}
+                className="mb-1 flex-none rounded-full"
+              />
+            )}
+            <div
+              className={
+                m.role === "assistant"
+                  ? "max-w-[80%] rounded-2xl rounded-tl-sm bg-neutral-100 px-4 py-3 text-sm text-neutral-700"
+                  : "max-w-[85%] rounded-2xl rounded-tr-sm px-4 py-3 text-sm text-white"
+              }
+              style={m.role === "user" ? { backgroundColor: "#146EF5" } : undefined}
+            >
+              {m.content}
+            </div>
           </div>
         ))}
 
         {sending && (
-          <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-neutral-100 px-4 py-3 text-sm text-neutral-400">
-            Thinking…
+          <div className="flex items-end gap-2">
+            <Image
+              src="/haven-home-tech-logo.png"
+              alt=""
+              width={22}
+              height={22}
+              className="mb-1 flex-none rounded-full"
+            />
+            <div className="max-w-[80%] rounded-2xl rounded-tl-sm bg-neutral-100 px-4 py-3 text-sm text-neutral-400">
+              Thinking…
+            </div>
           </div>
         )}
 
