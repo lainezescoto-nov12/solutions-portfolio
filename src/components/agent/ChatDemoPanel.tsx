@@ -44,14 +44,6 @@ function getSpeechRecognition(): (new () => SpeechRecognitionLike) | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
-function speak(text: string) {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = navigator.language || "en-US";
-  window.speechSynthesis.speak(utterance);
-}
-
 export function ChatDemoPanel() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -68,7 +60,26 @@ export function ChatDemoPanel() {
   const [micSupported, setMicSupported] = useState(false);
   const [voiceModeOn, setVoiceModeOn] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  async function speak(text: string) {
+    try {
+      audioRef.current?.pause();
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) return; // voice is a bonus on top of the text reply already shown -- fail silently
+      const blob = await res.blob();
+      const audio = new Audio(URL.createObjectURL(blob));
+      audioRef.current = audio;
+      audio.play();
+    } catch {
+      // same -- text reply already landed, don't surface a voice-playback error
+    }
+  }
 
   useEffect(() => {
     // One-time browser-capability check on mount -- window/SpeechRecognition
@@ -84,7 +95,7 @@ export function ChatDemoPanel() {
 
   useEffect(() => {
     return () => {
-      window.speechSynthesis?.cancel();
+      audioRef.current?.pause();
     };
   }, []);
 
@@ -166,7 +177,7 @@ export function ChatDemoPanel() {
           <button
             type="button"
             onClick={() => {
-              window.speechSynthesis?.cancel();
+              audioRef.current?.pause();
               setVoiceModeOn(false);
             }}
             className="rounded-full border border-neutral-200 px-2.5 py-1 text-[11px] font-medium text-neutral-500 hover:text-neutral-900"
