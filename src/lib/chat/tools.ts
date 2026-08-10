@@ -4,7 +4,7 @@
 // Same shape as the voice agent's tools regardless: typed functions,
 // registered once, the model decides when to call them.
 import { searchDevices } from "@/lib/shopify/client";
-import { mockTroubleshootingSteps } from "@/lib/mock-data/catalog";
+import { mockTroubleshootingSteps, mockPolicyKB } from "@/lib/mock-data/catalog";
 
 export const toolDefinitions = [
   {
@@ -39,13 +39,29 @@ export const toolDefinitions = [
       required: ["issue"],
     },
   },
+  {
+    name: "get_policy_answer",
+    description:
+      "Look up an answer to a question about returns, exchanges, warranty, or shipping policy. Use this for any policy question -- never answer from memory or invent policy terms.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        question: {
+          type: "string",
+          description:
+            "The customer's policy question, e.g. 'what is your return policy' or 'how do I file a warranty claim'.",
+        },
+      },
+      required: ["question"],
+    },
+  },
 ] as const;
 
-function scoreTroubleshootingMatch(query: string, issue: string): number {
+function scoreKeywordMatch(query: string, target: string): number {
   const queryWords = new Set(query.toLowerCase().split(/\s+/));
-  const issueWords = new Set(issue.toLowerCase().split(/\s+/));
+  const targetWords = new Set(target.toLowerCase().split(/\s+/));
   let overlap = 0;
-  for (const w of queryWords) if (issueWords.has(w)) overlap++;
+  for (const w of queryWords) if (targetWords.has(w)) overlap++;
   return overlap;
 }
 
@@ -62,7 +78,7 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
   if (name === "get_troubleshooting_steps") {
     const issue = String(input.issue ?? "");
     const scored = mockTroubleshootingSteps
-      .map((entry) => ({ entry, score: scoreTroubleshootingMatch(issue, entry.issue) }))
+      .map((entry) => ({ entry, score: scoreKeywordMatch(issue, entry.issue) }))
       .sort((a, b) => b.score - a.score);
 
     if (scored[0].score === 0) {
@@ -72,6 +88,21 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
       };
     }
     return { found: true, issue: scored[0].entry.issue, steps: scored[0].entry.steps };
+  }
+
+  if (name === "get_policy_answer") {
+    const question = String(input.question ?? "");
+    const scored = mockPolicyKB
+      .map((entry) => ({ entry, score: scoreKeywordMatch(question, entry.question) }))
+      .sort((a, b) => b.score - a.score);
+
+    if (scored[0].score === 0) {
+      return {
+        found: false,
+        note: "No matching policy entry -- recommend contacting support directly.",
+      };
+    }
+    return { found: true, matchedQuestion: scored[0].entry.question, answer: scored[0].entry.answer };
   }
 
   throw new Error(`Unknown tool: ${name}`);

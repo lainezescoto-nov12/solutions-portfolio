@@ -55,3 +55,45 @@ export const mockTroubleshootingSteps: TroubleshootingStep[] = [
     ],
   },
 ];
+
+// Company policy KB -- returns, warranty, exchanges, shipping. Distinct
+// from troubleshooting (a single answer, not a step-by-step fix), and
+// still static/curated rather than commerce data, same reasoning as the
+// troubleshooting KB above.
+export type PolicyEntry = {
+  question: string;
+  answer: string;
+};
+
+export const mockPolicyKB: PolicyEntry[] = [
+  {
+    question: "what is your return policy",
+    answer:
+      "Devices can be returned within 30 days of delivery for a full refund, as long as they're in original condition with all included accessories. Opened-but-unused items are fine; devices with physical damage from installation (like drilled mounting holes) aren't eligible for a full refund.",
+  },
+  {
+    question: "how do I exchange a product",
+    answer:
+      "Exchanges follow the same 30-day window as returns. The fastest path is to start a return for the original item and place a new order for the replacement -- that way the new device ships immediately instead of waiting on the returned one to arrive back first.",
+  },
+  {
+    question: "what is the warranty on your devices",
+    answer:
+      "All Haven Home Tech devices carry a 1-year limited warranty covering manufacturing defects and hardware failure under normal use. It doesn't cover physical damage, water damage beyond the device's rated weatherproofing, or issues caused by unauthorized firmware modifications.",
+  },
+  {
+    question: "how long does shipping take",
+    answer:
+      "Standard shipping takes 3-5 business days within the continental US. Expedited 2-day shipping is available at checkout for an additional fee.",
+  },
+  {
+    question: "do you offer international shipping",
+    answer:
+      "Not currently -- Haven Home Tech ships within the United States only.",
+  },
+  {
+    question: "how do I file a warranty claim",
+    answer:
+      "Contact support with your order number and a description of the issue. If the device is confirmed defective under warranty, we'll send a prepaid return label and ship a replacement once the defective unit is received.",
+  },
+];

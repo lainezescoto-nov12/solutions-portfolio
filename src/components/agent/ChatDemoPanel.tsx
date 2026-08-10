@@ -8,6 +8,7 @@ type ToolCall = { name: string; input: unknown; output: unknown };
 const TOOL_LABELS: Record<string, string> = {
   search_devices: "Searching the live product catalog",
   get_troubleshooting_steps: "Checking troubleshooting knowledge base",
+  get_policy_answer: "Checking returns & warranty policy",
 };
 
 // Browser-native speech-to-text, not a second ElevenLabs voice agent --
