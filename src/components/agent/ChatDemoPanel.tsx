@@ -248,15 +248,19 @@ export function ChatDemoPanel() {
 
   return (
     <div className="flex h-[520px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg shadow-neutral-200/60">
-      <div className="flex items-center justify-between gap-2.5 border-b border-neutral-200 bg-neutral-950 px-5 py-3.5">
+      <div
+        className="flex items-center justify-between gap-2.5 px-5 py-3.5"
+        style={{ background: "linear-gradient(135deg, #146EF5 0%, #0a2472 100%)" }}
+      >
         <div className="flex items-center gap-2.5">
-          <Image
-            src="/haven-home-tech-logo.png"
-            alt="Haven AI Support Agent"
-            width={30}
-            height={30}
-            className="rounded-full ring-2 ring-white/20"
-          />
+          <div className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-white p-1.5 ring-2 ring-white/30">
+            <Image
+              src="/haven-home-tech-logo.png"
+              alt="Haven AI Support Agent"
+              width={26}
+              height={26}
+            />
+          </div>
           <div>
             <p className="text-sm font-semibold text-white">Haven AI Support Agent</p>
             <a
