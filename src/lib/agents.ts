@@ -2,6 +2,7 @@ export type AgentStat = {
   label: string;
   value: string;
   href?: string;
+  linkLabel?: string;
 };
 
 export type SamplePrompt = {
@@ -73,6 +74,7 @@ export const agents: Agent[] = [
         label: "Catalog",
         value: "Live Shopify store",
         href: "https://haven-home-tech.myshopify.com",
+        linkLabel: "Haven Home Tech",
       },
       { label: "Tool-calling", value: "Claude" },
     ],
