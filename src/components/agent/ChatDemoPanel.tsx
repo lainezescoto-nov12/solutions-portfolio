@@ -380,7 +380,7 @@ export function ChatDemoPanel() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-260px)] min-h-[640px] max-h-[820px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg shadow-neutral-200/60">
+    <div className="flex h-full min-h-[640px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg shadow-neutral-200/60">
       <div
         className="flex items-center justify-between gap-2.5 px-5 py-3.5"
         style={{ background: "linear-gradient(135deg, #146EF5 0%, #0a2472 100%)" }}
