@@ -209,6 +209,12 @@ export function ChatDemoPanel() {
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Voice mode chains send() calls through recognition callbacks set up by
+  // an earlier startListening() closure, so send() can't rely on the
+  // `messages` state variable -- that closure's snapshot goes stale the
+  // moment a later render updates it. This ref is mutated in place, so
+  // every closure, however old, reads the live conversation.
+  const messagesRef = useRef<Message[]>(messages);
   // Voice mode is a real ongoing mode now (enter via waveform, exit only
   // via the X button), not a per-message toggle -- recognition callbacks
   // and the post-reply "resume listening" step run async, so they need a
@@ -330,7 +336,8 @@ export function ChatDemoPanel() {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
 
-    const nextMessages: Message[] = [...messages, { role: "user", content: trimmed }];
+    const nextMessages: Message[] = [...messagesRef.current, { role: "user", content: trimmed }];
+    messagesRef.current = nextMessages;
     setMessages(nextMessages);
     setInput("");
     setSending(true);
@@ -357,10 +364,13 @@ export function ChatDemoPanel() {
       );
       setLastToolCalls(calls);
       const products = productCardsFromToolCalls(data.toolCalls ?? []);
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: data.reply, products: products.length ? products : undefined },
-      ]);
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: data.reply,
+        products: products.length ? products : undefined,
+      };
+      messagesRef.current = [...messagesRef.current, assistantMessage];
+      setMessages(messagesRef.current);
       // Voice mode is a real mode now -- every reply speaks while it's on,
       // whether that specific message was typed or spoken, same as a real
       // voice conversation. Only the X button turns it off.
