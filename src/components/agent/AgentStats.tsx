@@ -9,9 +9,20 @@ export function AgentStats({ agent }: { agent: Agent }) {
             key={s.label}
             className="flex flex-col gap-2 border-neutral-200 px-6 py-8 [&:not(:last-child)]:border-b sm:[&:not(:last-child)]:border-b-0 sm:[&:not(:last-child)]:border-r"
           >
-            <span className="text-2xl font-semibold tracking-tight text-neutral-950">
-              {s.value}
-            </span>
+            {s.href ? (
+              <a
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-2xl font-semibold tracking-tight text-neutral-950 underline decoration-neutral-300 underline-offset-4 transition hover:text-[#146EF5] hover:decoration-[#146EF5]"
+              >
+                {s.value}
+              </a>
+            ) : (
+              <span className="text-2xl font-semibold tracking-tight text-neutral-950">
+                {s.value}
+              </span>
+            )}
             <span className="text-sm text-neutral-500">{s.label}</span>
           </div>
         ))}

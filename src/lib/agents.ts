@@ -1,6 +1,7 @@
 export type AgentStat = {
   label: string;
   value: string;
+  href?: string;
 };
 
 export type SamplePrompt = {
@@ -68,7 +69,11 @@ export const agents: Agent[] = [
       "A chat agent for a smart-home device company covering two jobs: recommending the right product for a customer's setup, and troubleshooting connectivity or pairing issues step by step. Product recommendations query a real Shopify store's live catalog via the Admin API — not mocked data — while troubleshooting guidance comes from a small curated knowledge base. Click the waveform icon and it becomes hands-free: browser speech recognition listens, ElevenLabs text-to-speech replies out loud, and it supports barge-in, so you can cut it off mid-sentence the way you'd interrupt a person.",
     stats: [
       { label: "Use cases", value: "2" },
-      { label: "Catalog", value: "Live Shopify store" },
+      {
+        label: "Catalog",
+        value: "Live Shopify store",
+        href: "https://haven-home-tech.myshopify.com",
+      },
       { label: "Tool-calling", value: "Claude" },
     ],
     stack: [
