@@ -61,17 +61,25 @@ export const agents: Agent[] = [
     slug: "chat",
     name: "Chat",
     industry: "Haven Home Tech — Smart Home / IoT",
-    tagline: "A chat AI agent that provides product recommendations and troubleshooting guidance when needed.",
+    tagline: "A chat AI agent that provides product recommendations and troubleshooting guidance, and switches into a hands-free voice mode you can talk over like a real conversation.",
     status: "live",
     statusLabel: "Live — real Shopify catalog",
     summary:
-      "A chat agent for a smart-home device company covering two jobs: recommending the right product for a customer's setup, and troubleshooting connectivity or pairing issues step by step. Product recommendations query a real Shopify store's live catalog via the Admin API — not mocked data — while troubleshooting guidance comes from a small curated knowledge base.",
+      "A chat agent for a smart-home device company covering two jobs: recommending the right product for a customer's setup, and troubleshooting connectivity or pairing issues step by step. Product recommendations query a real Shopify store's live catalog via the Admin API — not mocked data — while troubleshooting guidance comes from a small curated knowledge base. Click the waveform icon and it becomes hands-free: browser speech recognition listens, ElevenLabs text-to-speech replies out loud, and it supports barge-in, so you can cut it off mid-sentence the way you'd interrupt a person.",
     stats: [
       { label: "Use cases", value: "2" },
       { label: "Catalog", value: "Live Shopify store" },
       { label: "Tool-calling", value: "Claude" },
     ],
-    stack: ["Next.js", "Claude tool-calling", "Shopify Admin API", "Notion (KB)", "Claude Haiku 4.5"],
+    stack: [
+      "Next.js",
+      "Claude tool-calling",
+      "Shopify Admin API",
+      "Notion (KB)",
+      "Claude Haiku 4.5",
+      "Web Speech API",
+      "ElevenLabs TTS",
+    ],
     samplePromptsIntro:
       "Haven Home Tech sells smart-home devices — cameras, sensors, hubs, thermostats, and locks. You don't need to know the exact product names to try these:",
     samplePrompts: [
