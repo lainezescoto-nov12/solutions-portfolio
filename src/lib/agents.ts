@@ -79,7 +79,8 @@ export const agents: Agent[] = [
         label: "Product recommendation",
         prompt: "\"I want a camera for my front porch.\"",
         followUps: [
-          "Battery-powered, and no, I don't have a Home Hub Core",
+          "Battery-powered, please",
+          "No, I don't have a Home Hub Core",
         ],
       },
       {

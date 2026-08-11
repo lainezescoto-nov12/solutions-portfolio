@@ -211,13 +211,24 @@ export function ChatDemoPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      if (!res.ok) return; // voice is a bonus on top of the text reply already shown -- fail silently
+      if (!res.ok) {
+        // Text reply already landed, so this stays non-blocking -- but
+        // logged, not silent, since "voice mode played nothing" was
+        // previously undiagnosable without this.
+        const body = await res.text().catch(() => "");
+        console.error(`/api/tts failed (${res.status}):`, body);
+        return;
+      }
       const blob = await res.blob();
       const audio = new Audio(URL.createObjectURL(blob));
       audioRef.current = audio;
-      audio.play();
-    } catch {
-      // same -- text reply already landed, don't surface a voice-playback error
+      // audio.play() returns a promise that can reject (autoplay policy,
+      // decode failure, etc) -- must be awaited/caught explicitly or a
+      // rejection here becomes a silent unhandled promise rejection that
+      // never reaches the outer catch.
+      await audio.play();
+    } catch (err) {
+      console.error("Voice playback failed:", err);
     }
   }
 
