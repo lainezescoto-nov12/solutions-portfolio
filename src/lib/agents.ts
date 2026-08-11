@@ -75,7 +75,13 @@ export const agents: Agent[] = [
     samplePromptsIntro:
       "Haven Home Tech sells smart-home devices — cameras, sensors, hubs, thermostats, and locks. You don't need to know the exact product names to try these:",
     samplePrompts: [
-      { label: "Product recommendation", prompt: "\"I want a camera for my front porch that works without running new wiring.\"" },
+      {
+        label: "Product recommendation",
+        prompt: "\"I want a camera for my front porch.\"",
+        followUps: [
+          "Battery-powered, and no, I don't have a Home Hub Core",
+        ],
+      },
       {
         label: "Troubleshooting",
         prompt: "\"My hub shows online but the sensor keeps dropping offline every few hours.\"",

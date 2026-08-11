@@ -3,8 +3,23 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-type Message = { role: "user" | "assistant"; content: string };
+type ProductCard = { id: string; title: string; priceUsd: number; imageUrl: string | null };
+type Message = { role: "user" | "assistant"; content: string; products?: ProductCard[] };
 type ToolCall = { name: string; input: unknown; output: unknown; label: string; detail: string };
+
+// Pulls product cards (with real Shopify image URLs) out of a
+// search_devices tool result so the reply can show an actual carousel
+// instead of just describing the product in text.
+function productCardsFromToolCalls(calls: { name: string; output: unknown }[]): ProductCard[] {
+  const searchCall = calls.find((c) => c.name === "search_devices");
+  if (!searchCall) return [];
+  const output = searchCall.output as { found?: boolean; devices?: unknown[] } | undefined;
+  if (!output?.found || !Array.isArray(output.devices)) return [];
+  return output.devices.map((d) => {
+    const device = d as { id: string; title: string; priceUsd: number; imageUrl: string | null };
+    return { id: device.id, title: device.title, priceUsd: device.priceUsd, imageUrl: device.imageUrl };
+  });
+}
 
 const SHOPIFY_STORE_URL = "https://haven-home-tech.myshopify.com";
 
@@ -140,6 +155,33 @@ function SpeakerIcon({ muted }: { muted: boolean }) {
   );
 }
 
+function ProductCarousel({ products }: { products: ProductCard[] }) {
+  return (
+    <div className="ml-8 flex gap-3 overflow-x-auto pb-1 pt-1">
+      {products.map((p) => (
+        <div
+          key={p.id}
+          className="w-36 flex-none overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm"
+        >
+          <div className="relative h-24 w-full bg-neutral-100">
+            {p.imageUrl ? (
+              <Image src={p.imageUrl} alt={p.title} fill className="object-cover" sizes="144px" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-[10px] text-neutral-400">
+                No image
+              </div>
+            )}
+          </div>
+          <div className="p-2.5">
+            <p className="line-clamp-2 text-xs font-medium text-neutral-800">{p.title}</p>
+            <p className="mt-1 text-xs font-semibold text-neutral-950">${p.priceUsd.toFixed(2)}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function ChatDemoPanel() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -261,7 +303,11 @@ export function ChatDemoPanel() {
         })
       );
       setLastToolCalls(calls);
-      setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+      const products = productCardsFromToolCalls(data.toolCalls ?? []);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: data.reply, products: products.length ? products : undefined },
+      ]);
       // Only speak when THIS turn was voice-triggered -- voiceModeOn just
       // controls which icon shows and whether the mute toggle is visible,
       // it should not make typed messages get spoken replies too.
@@ -317,29 +363,29 @@ export function ChatDemoPanel() {
 
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto bg-neutral-50/50 p-6">
         {messages.map((m, i) => (
-          <div
-            key={i}
-            className={m.role === "assistant" ? "flex items-end gap-2" : "flex justify-end"}
-          >
-            {m.role === "assistant" && (
-              <Image
-                src="/haven-home-tech-logo.png"
-                alt=""
-                width={26}
-                height={26}
-                className="mb-1 flex-none rounded-full"
-              />
-            )}
-            <div
-              className={
-                m.role === "assistant"
-                  ? "max-w-[75%] rounded-2xl rounded-tl-sm bg-white px-5 py-3 text-[15px] leading-relaxed text-neutral-700 shadow-sm ring-1 ring-neutral-200"
-                  : "max-w-[75%] rounded-2xl rounded-tr-sm px-5 py-3 text-[15px] leading-relaxed text-white shadow-sm"
-              }
-              style={m.role === "user" ? { backgroundColor: "#146EF5" } : undefined}
-            >
-              {m.content}
+          <div key={i} className="flex flex-col gap-2">
+            <div className={m.role === "assistant" ? "flex items-end gap-2" : "flex justify-end"}>
+              {m.role === "assistant" && (
+                <Image
+                  src="/haven-home-tech-logo.png"
+                  alt=""
+                  width={26}
+                  height={26}
+                  className="mb-1 flex-none rounded-full"
+                />
+              )}
+              <div
+                className={
+                  m.role === "assistant"
+                    ? "max-w-[75%] rounded-2xl rounded-tl-sm bg-white px-5 py-3 text-[15px] leading-relaxed text-neutral-700 shadow-sm ring-1 ring-neutral-200"
+                    : "max-w-[75%] rounded-2xl rounded-tr-sm px-5 py-3 text-[15px] leading-relaxed text-white shadow-sm"
+                }
+                style={m.role === "user" ? { backgroundColor: "#146EF5" } : undefined}
+              >
+                {m.content}
+              </div>
             </div>
+            {m.products && m.products.length > 0 && <ProductCarousel products={m.products} />}
           </div>
         ))}
 

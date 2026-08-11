@@ -1,6 +1,19 @@
 import Link from "next/link";
 
+// Evaluated at build time (this is a static Server Component, not
+// client-rendered), so it reflects the last successful deploy -- if the
+// site breaks after a bad push, this timestamp still shows the last time
+// it was actively worked on, rather than silently going stale.
+function formatBuildTimestamp(): string {
+  return new Date().toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "UTC",
+  }) + " UTC";
+}
+
 export function Hero() {
+  const lastUpdated = formatBuildTimestamp();
   return (
     <section className="relative overflow-hidden bg-neutral-950 text-white">
       <div
@@ -46,6 +59,9 @@ export function Hero() {
             Resume
           </Link>
         </div>
+        <p className="mt-6 text-xs text-white/35">
+          Last updated {lastUpdated} — actively maintained, not a static demo.
+        </p>
       </div>
     </section>
   );

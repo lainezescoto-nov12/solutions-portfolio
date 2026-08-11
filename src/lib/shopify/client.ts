@@ -80,6 +80,7 @@ export type ShopifyDevice = {
   description: string;
   priceUsd: number;
   tags: string[];
+  imageUrl: string | null;
 };
 
 const SEARCH_PRODUCTS_QUERY = /* GraphQL */ `
@@ -96,6 +97,9 @@ const SEARCH_PRODUCTS_QUERY = /* GraphQL */ `
             minVariantPrice {
               amount
             }
+          }
+          featuredImage {
+            url
           }
         }
       }
@@ -114,7 +118,19 @@ const SEARCH_PRODUCTS_QUERY = /* GraphQL */ `
 // used for the troubleshooting/policy KBs.
 export async function fetchAllDevices(): Promise<ShopifyDevice[]> {
   const data = await adminGraphql<{
-    products: { edges: { node: { id: string; title: string; productType: string; description: string; tags: string[]; priceRangeV2: { minVariantPrice: { amount: string } } } }[] };
+    products: {
+      edges: {
+        node: {
+          id: string;
+          title: string;
+          productType: string;
+          description: string;
+          tags: string[];
+          priceRangeV2: { minVariantPrice: { amount: string } };
+          featuredImage: { url: string } | null;
+        };
+      }[];
+    };
   }>(SEARCH_PRODUCTS_QUERY, { query: `vendor:"Haven Home Tech"` });
 
   return data.products.edges.map(({ node }) => ({
@@ -124,5 +140,6 @@ export async function fetchAllDevices(): Promise<ShopifyDevice[]> {
     description: node.description,
     priceUsd: parseFloat(node.priceRangeV2.minVariantPrice.amount),
     tags: node.tags,
+    imageUrl: node.featuredImage?.url ?? null,
   }));
 }
