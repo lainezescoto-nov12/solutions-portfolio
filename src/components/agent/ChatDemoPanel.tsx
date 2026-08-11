@@ -339,6 +339,11 @@ export function ChatDemoPanel() {
       const transcript = event.results[0]?.[0]?.transcript;
       if (transcript) {
         gotResult = true;
+        // Barge-in: the mic listens the whole time the AI is talking (see
+        // send()), so if the user starts speaking mid-reply, cut the AI
+        // off immediately instead of finishing its sentence over them.
+        audioRef.current?.pause();
+        setSpeaking(false);
         send(transcript);
       }
     };
@@ -425,13 +430,14 @@ export function ChatDemoPanel() {
       // Voice mode is a real mode now -- every reply speaks while it's on,
       // whether that specific message was typed or spoken, same as a real
       // voice conversation. Only the X button turns it off.
-      if (voiceModeOnRef.current && !muted) {
-        await speak(data.reply);
-      }
-      // Resume listening for the next turn -- voice mode doesn't require
-      // clicking the mic again between exchanges, only exiting via X.
+      // Start listening immediately, in parallel with the reply speaking
+      // (not awaited below) -- a real conversation lets you cut in, so the
+      // mic doesn't sit idle until the AI finishes its sentence.
       if (voiceModeOnRef.current) {
         startListening();
+        if (!muted) {
+          speak(data.reply);
+        }
       }
     } catch {
       setError("Couldn't reach the chat backend.");
