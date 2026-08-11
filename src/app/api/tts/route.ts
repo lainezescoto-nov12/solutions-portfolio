@@ -8,6 +8,25 @@ import { NextResponse } from "next/server";
 // not Ridgeline's dealership voice).
 const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // "Rachel", a standard premade ElevenLabs voice
 
+// Rewrites text for how it should sound spoken, applied only to what gets
+// sent to TTS -- the chat bubble keeps showing the original "$79", this
+// never touches the displayed/stored message. Deliberately narrow: only
+// patterns common in this catalog (prices, percentages, GHz bands), not a
+// general number-to-words engine.
+function toSpeechText(text: string): string {
+  return text
+    // "$24.99" -> "24 dollars and 99 cents"
+    .replace(/\$(\d+)\.(\d{2})\b/g, (_m, dollars, cents) =>
+      cents === "00" ? `${dollars} dollars` : `${dollars} dollars and ${cents} cents`
+    )
+    // "$79" -> "79 dollars"
+    .replace(/\$(\d+)\b/g, "$1 dollars")
+    // "20%" -> "20 percent"
+    .replace(/(\d+)%/g, "$1 percent")
+    // "2.4GHz" / "5 GHz" -> "2.4 gigahertz" / "5 gigahertz"
+    .replace(/(\d+(?:\.\d+)?)\s?GHz/gi, "$1 gigahertz");
+}
+
 export async function POST(request: Request) {
   try {
     const apiKey = process.env.ELEVENLABS_API_KEY;
@@ -31,7 +50,7 @@ export async function POST(request: Request) {
           "xi-api-key": apiKey,
         },
         body: JSON.stringify({
-          text,
+          text: toSpeechText(text),
           model_id: "eleven_turbo_v2_5",
           voice_settings: { stability: 0.5, similarity_boost: 0.75 },
         }),
