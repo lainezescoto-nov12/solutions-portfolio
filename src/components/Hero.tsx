@@ -35,8 +35,10 @@ export function Hero() {
           Three AI agents. Three different stories.
         </h1>
         <p className="mt-6 max-w-2xl text-lg text-white/70 sm:text-xl">
-          Click into a voice, chat, or email agent and run it yourself. Real
-          tool-calling, real backends, workflows you can follow end to end.
+          Click into a voice, chat, or email agent and run it yourself — the
+          chat agent even talks back when you switch it into voice mode.
+          Real tool-calling, real backends, workflows you can follow end to
+          end.
         </p>
         <div className="mt-10 flex flex-wrap gap-4">
           <a

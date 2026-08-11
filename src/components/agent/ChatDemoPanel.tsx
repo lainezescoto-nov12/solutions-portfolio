@@ -137,6 +137,14 @@ function MicIcon() {
   );
 }
 
+function XIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function SpeakerIcon({ muted }: { muted: boolean }) {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -201,35 +209,53 @@ export function ChatDemoPanel() {
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Voice mode is a real ongoing mode now (enter via waveform, exit only
+  // via the X button), not a per-message toggle -- recognition callbacks
+  // and the post-reply "resume listening" step run async, so they need a
+  // value that's always current rather than whatever voiceModeOn was
+  // when the closure was created.
+  const voiceModeOnRef = useRef(false);
 
-  async function speak(text: string) {
-    if (muted) return;
-    try {
-      audioRef.current?.pause();
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      if (!res.ok) {
-        // Text reply already landed, so this stays non-blocking -- but
-        // logged, not silent, since "voice mode played nothing" was
-        // previously undiagnosable without this.
-        const body = await res.text().catch(() => "");
-        console.error(`/api/tts failed (${res.status}):`, body);
+  function setVoiceMode(on: boolean) {
+    voiceModeOnRef.current = on;
+    setVoiceModeOn(on);
+  }
+
+  // Resolves once playback actually finishes (not just once it starts) --
+  // the caller needs to know when it's safe to start listening again
+  // without the mic picking up the assistant's own voice.
+  function speak(text: string): Promise<void> {
+    return new Promise((resolve) => {
+      if (muted) {
+        resolve();
         return;
       }
-      const blob = await res.blob();
-      const audio = new Audio(URL.createObjectURL(blob));
-      audioRef.current = audio;
-      // audio.play() returns a promise that can reject (autoplay policy,
-      // decode failure, etc) -- must be awaited/caught explicitly or a
-      // rejection here becomes a silent unhandled promise rejection that
-      // never reaches the outer catch.
-      await audio.play();
-    } catch (err) {
-      console.error("Voice playback failed:", err);
-    }
+      (async () => {
+        try {
+          audioRef.current?.pause();
+          const res = await fetch("/api/tts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
+          });
+          if (!res.ok) {
+            const body = await res.text().catch(() => "");
+            console.error(`/api/tts failed (${res.status}):`, body);
+            resolve();
+            return;
+          }
+          const blob = await res.blob();
+          const audio = new Audio(URL.createObjectURL(blob));
+          audioRef.current = audio;
+          audio.onended = () => resolve();
+          audio.onerror = () => resolve();
+          await audio.play();
+        } catch (err) {
+          console.error("Voice playback failed:", err);
+          resolve();
+        }
+      })();
+    });
   }
 
   useEffect(() => {
@@ -251,6 +277,7 @@ export function ChatDemoPanel() {
   }, []);
 
   function startListening() {
+    if (!voiceModeOnRef.current) return;
     const SpeechRecognitionCtor = getSpeechRecognition();
     if (!SpeechRecognitionCtor) return;
 
@@ -259,32 +286,47 @@ export function ChatDemoPanel() {
     recognition.continuous = false;
     recognition.interimResults = false;
 
+    let gotResult = false;
+
     recognition.onresult = (event) => {
       const transcript = event.results[0]?.[0]?.transcript;
       if (transcript) {
-        setVoiceModeOn(true);
-        send(transcript, true);
+        gotResult = true;
+        send(transcript);
       }
     };
-    recognition.onend = () => setListening(false);
-    recognition.onerror = () => setListening(false);
+    recognition.onend = () => {
+      setListening(false);
+      // Nothing was said this cycle (silence timeout) -- if still in
+      // voice mode, keep listening instead of going quiet and waiting
+      // for a click that voice mode isn't supposed to need anymore.
+      if (!gotResult && voiceModeOnRef.current) {
+        startListening();
+      }
+    };
+    recognition.onerror = () => {
+      setListening(false);
+      if (voiceModeOnRef.current) startListening();
+    };
 
     recognitionRef.current = recognition;
     setListening(true);
     recognition.start();
   }
 
-  function handleMicClick() {
-    if (listening) {
-      recognitionRef.current?.stop();
-      return;
-    }
-    // Not yet in voice mode -- this tap is "switch to voice mode."
-    // Already in voice mode -- start listening for the next voice turn.
+  function enterVoiceMode() {
+    setVoiceMode(true);
     startListening();
   }
 
-  async function send(text: string, spoken = false) {
+  function exitVoiceMode() {
+    recognitionRef.current?.stop();
+    audioRef.current?.pause();
+    setVoiceMode(false);
+    setListening(false);
+  }
+
+  async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
 
@@ -319,10 +361,17 @@ export function ChatDemoPanel() {
         ...prev,
         { role: "assistant", content: data.reply, products: products.length ? products : undefined },
       ]);
-      // Only speak when THIS turn was voice-triggered -- voiceModeOn just
-      // controls which icon shows and whether the mute toggle is visible,
-      // it should not make typed messages get spoken replies too.
-      if (spoken && !muted) speak(data.reply);
+      // Voice mode is a real mode now -- every reply speaks while it's on,
+      // whether that specific message was typed or spoken, same as a real
+      // voice conversation. Only the X button turns it off.
+      if (voiceModeOnRef.current && !muted) {
+        await speak(data.reply);
+      }
+      // Resume listening for the next turn -- voice mode doesn't require
+      // clicking the mic again between exchanges, only exiting via X.
+      if (voiceModeOnRef.current) {
+        startListening();
+      }
     } catch {
       setError("Couldn't reach the chat backend.");
     } finally {
@@ -445,29 +494,50 @@ export function ChatDemoPanel() {
         className="border-t border-neutral-200 bg-white p-4"
       >
         <div className="flex items-center gap-2.5 rounded-full border border-neutral-200 bg-neutral-50 px-5 py-3 transition focus-within:border-neutral-300 focus-within:bg-white">
-          {micSupported && (
+          {micSupported && !voiceModeOn && (
             <button
               type="button"
-              onClick={handleMicClick}
+              onClick={enterVoiceMode}
               disabled={sending}
-              aria-label={
-                listening ? "Stop recording" : voiceModeOn ? "Speak again" : "Switch to voice mode"
-              }
-              title={voiceModeOn ? "Speak again" : "Switch to voice mode"}
-              className={`flex h-7 w-7 flex-none items-center justify-center rounded-full transition ${
-                listening
-                  ? "bg-red-500 text-white"
-                  : "bg-white text-neutral-500 hover:text-neutral-900"
-              }`}
+              aria-label="Switch to voice mode"
+              title="Switch to voice mode"
+              className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-white text-neutral-500 transition hover:text-neutral-900"
             >
-              {voiceModeOn ? <MicIcon /> : <WaveformIcon />}
+              <WaveformIcon />
             </button>
+          )}
+          {micSupported && voiceModeOn && (
+            <div className="flex flex-none items-center gap-1.5">
+              <div
+                title={listening ? "Listening…" : "In voice mode"}
+                className={`flex h-7 w-7 items-center justify-center rounded-full transition ${
+                  listening ? "animate-pulse bg-red-500 text-white" : "bg-neutral-200 text-neutral-600"
+                }`}
+              >
+                <MicIcon />
+              </div>
+              <button
+                type="button"
+                onClick={exitVoiceMode}
+                aria-label="Exit voice mode"
+                title="Exit voice mode"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 transition hover:bg-neutral-300 hover:text-neutral-900"
+              >
+                <XIcon />
+              </button>
+            </div>
           )}
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={sending}
-            placeholder={listening ? "Listening…" : "Ask about a device, or describe a problem…"}
+            placeholder={
+              listening
+                ? "Listening…"
+                : voiceModeOn
+                  ? "In voice mode — type or wait to speak…"
+                  : "Ask about a device, or describe a problem…"
+            }
             className="flex-1 bg-transparent text-[15px] text-neutral-900 outline-none placeholder:text-neutral-400"
           />
           <button

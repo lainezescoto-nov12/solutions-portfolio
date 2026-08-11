@@ -84,6 +84,10 @@ export const agents: Agent[] = [
         ],
       },
       {
+        label: "Browse a category",
+        prompt: "\"What types of cameras do you have?\"",
+      },
+      {
         label: "Troubleshooting",
         prompt: "\"My hub shows online but the sensor keeps dropping offline every few hours.\"",
         followUps: [
