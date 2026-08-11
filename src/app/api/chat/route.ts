@@ -70,6 +70,10 @@ export async function POST(request: Request) {
         try {
           output = await runTool(block.name, input);
         } catch (err) {
+          // This used to fail silently from the model's/user's perspective --
+          // the LLM got a polite "error" string and improvised a generic
+          // apology, but nothing was ever logged server-side to explain why.
+          console.error(`tool error: ${block.name}`, err);
           output = { error: err instanceof Error ? err.message : "Tool call failed." };
         }
         toolCalls.push({ name: block.name, input, output });
