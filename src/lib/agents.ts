@@ -64,12 +64,12 @@ export const agents: Agent[] = [
     name: "Chat",
     industry: "Haven Home Tech — Smart Home / IoT",
     tagline: "A chat AI agent that provides product recommendations and troubleshooting guidance, and switches into a hands-free voice mode you can talk over like a real conversation.",
-    status: "live",
-    statusLabel: "Live — real Shopify catalog",
+    status: "in-progress",
+    statusLabel: "In progress — WISMO build",
     summary:
-      "A chat agent for a smart-home device company covering two jobs: recommending the right product for a customer's setup, and troubleshooting connectivity or pairing issues step by step. Product recommendations query a real Shopify store's live catalog via the Admin API — not mocked data — while troubleshooting guidance comes from a small curated knowledge base. Click the waveform icon and it becomes hands-free: browser speech recognition listens, ElevenLabs text-to-speech replies out loud, and it supports barge-in, so you can cut it off mid-sentence the way you'd interrupt a person.",
+      "A chat agent for a smart-home device company covering three jobs: recommending the right product for a customer's setup, troubleshooting connectivity or pairing issues step by step, and handling a where's-my-order case end to end, including a damaged-item report with real photo analysis. Product recommendations and order lookups query a real Shopify store's live data via the Admin API — not mocked data — while troubleshooting guidance comes from a small curated knowledge base. Click the waveform icon and it becomes hands-free: browser speech recognition listens, ElevenLabs text-to-speech replies out loud, and it supports barge-in, so you can cut it off mid-sentence the way you'd interrupt a person.",
     stats: [
-      { label: "Use cases", value: "2" },
+      { label: "Use cases", value: "3" },
       {
         label: "Catalog",
         value: "Live Shopify store",
@@ -119,6 +119,16 @@ export const agents: Agent[] = [
       },
       { label: "Compatibility check", prompt: "\"I've got an old Honeywell thermostat and my HVAC system doesn't have a C-wire, would your thermostat still work for me?\"" },
       { label: "Returns & warranty", prompt: "\"What's your return policy, and how long is the warranty?\"" },
+      {
+        label: "WISMO / damaged item",
+        prompt: "\"Hi, where's my order? And when it showed up, it looked damaged.\"",
+        followUps: [
+          "It's order #1001",
+          "Sure, let's switch to voice mode",
+          "Here's a photo of the damage (attach an image with the paperclip icon)",
+          "Yeah, a replacement works. Actually, while I'm here, do you have a camera for my front porch?",
+        ],
+      },
     ],
   },
   {

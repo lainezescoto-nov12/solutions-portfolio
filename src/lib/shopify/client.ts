@@ -73,6 +73,87 @@ async function adminGraphql<T>(query: string, variables?: Record<string, unknown
   return json.data as T;
 }
 
+export type ShopifyOrder = {
+  name: string;
+  createdAt: string;
+  financialStatus: string | null;
+  fulfillmentStatus: string | null;
+  trackingUrl: string | null;
+  trackingNumber: string | null;
+  lineItemTitles: string[];
+};
+
+const FIND_ORDER_QUERY = /* GraphQL */ `
+  query FindOrder($query: String!) {
+    orders(first: 1, query: $query) {
+      edges {
+        node {
+          name
+          createdAt
+          displayFinancialStatus
+          displayFulfillmentStatus
+          fulfillments(first: 1) {
+            trackingInfo {
+              url
+              number
+            }
+          }
+          lineItems(first: 10) {
+            edges {
+              node {
+                title
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+// Looks up a single order by order number (e.g. "#1001" or "1001") or
+// customer email against the real Haven Home Tech store -- read-only,
+// same as fetchAllDevices below. There is no order-mutation call anywhere
+// in this client on purpose: see the "open_replacement_case" tool in
+// src/lib/chat/tools.ts for why a WISMO/damaged-item flow logs a case
+// instead of touching the order.
+export async function findOrder(identifier: string): Promise<ShopifyOrder | null> {
+  const trimmed = identifier.trim();
+  const looksLikeEmail = trimmed.includes("@");
+  const orderName = trimmed.replace(/^#/, "");
+  const query = looksLikeEmail ? `email:${trimmed}` : `name:#${orderName}`;
+
+  const data = await adminGraphql<{
+    orders: {
+      edges: {
+        node: {
+          name: string;
+          createdAt: string;
+          displayFinancialStatus: string | null;
+          displayFulfillmentStatus: string | null;
+          fulfillments: { trackingInfo: { url: string | null; number: string | null }[] }[];
+          lineItems: { edges: { node: { title: string } }[] };
+        };
+      }[];
+    };
+  }>(FIND_ORDER_QUERY, { query });
+
+  const edge = data.orders.edges[0];
+  if (!edge) return null;
+  const node = edge.node;
+  const tracking = node.fulfillments[0]?.trackingInfo?.[0];
+
+  return {
+    name: node.name,
+    createdAt: node.createdAt,
+    financialStatus: node.displayFinancialStatus,
+    fulfillmentStatus: node.displayFulfillmentStatus,
+    trackingUrl: tracking?.url ?? null,
+    trackingNumber: tracking?.number ?? null,
+    lineItemTitles: node.lineItems.edges.map((e) => e.node.title),
+  };
+}
+
 export type ShopifyDevice = {
   id: string;
   title: string;

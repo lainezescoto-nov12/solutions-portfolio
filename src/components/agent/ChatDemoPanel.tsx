@@ -4,7 +4,10 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 type ProductCard = { id: string; title: string; priceUsd: number; imageUrl: string | null };
-type Message = { role: "user" | "assistant"; content: string; products?: ProductCard[] };
+// `image`, when present, is a data URL of a photo the customer attached
+// (e.g. a damaged-item report) -- sent to /api/chat so Claude's vision can
+// look at it directly, and also rendered as a thumbnail in the bubble.
+type Message = { role: "user" | "assistant"; content: string; products?: ProductCard[]; image?: string };
 type ToolCall = { name: string; input: unknown; output: unknown; label: string; detail: string };
 
 // Pulls product cards (with real Shopify image URLs) out of a
@@ -145,6 +148,20 @@ function XIcon() {
   );
 }
 
+function PaperclipIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M8 12.5l6.5-6.5a3 3 0 0 1 4.24 4.24L11 18a5 5 0 0 1-7-7l7-7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function TrashIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -242,6 +259,8 @@ export function ChatDemoPanel() {
   const [micSupported, setMicSupported] = useState(false);
   const [voiceModeOn, setVoiceModeOn] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -386,16 +405,31 @@ export function ChatDemoPanel() {
     setLastToolCalls([]);
     setError("");
     setInput("");
+    setPendingImage(null);
+  }
+
+  function handleImageSelect(file: File | undefined) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") setPendingImage(reader.result);
+    };
+    reader.readAsDataURL(file);
   }
 
   async function send(text: string) {
     const trimmed = text.trim();
-    if (!trimmed || sending) return;
+    const attachedImage = pendingImage ?? undefined;
+    if ((!trimmed && !attachedImage) || sending) return;
 
-    const nextMessages: Message[] = [...messagesRef.current, { role: "user", content: trimmed }];
+    const nextMessages: Message[] = [
+      ...messagesRef.current,
+      { role: "user", content: trimmed, image: attachedImage },
+    ];
     messagesRef.current = nextMessages;
     setMessages(nextMessages);
     setInput("");
+    setPendingImage(null);
     setSending(true);
     setError("");
     setLastToolCalls([]);
@@ -509,6 +543,15 @@ export function ChatDemoPanel() {
                 }
                 style={m.role === "user" ? { backgroundColor: "#146EF5" } : undefined}
               >
+                {m.image && (
+                  // Customer-uploaded data URL, not a Shopify CDN image.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={m.image}
+                    alt="Attached photo"
+                    className="mb-2 max-h-48 w-full rounded-lg object-cover"
+                  />
+                )}
                 {m.content}
               </div>
             </div>
@@ -560,7 +603,44 @@ export function ChatDemoPanel() {
         }}
         className="border-t border-neutral-200 bg-white p-4"
       >
+        {pendingImage && (
+          <div className="mb-2 flex items-center gap-2 px-2">
+            <div className="relative h-14 w-14 flex-none overflow-hidden rounded-lg border border-neutral-200">
+              {/* Local blob/data URL preview, not a Shopify CDN image -- next/image's
+                  remote-pattern allowlist doesn't apply, so a plain img tag here. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={pendingImage} alt="Attached photo" className="h-full w-full object-cover" />
+            </div>
+            <button
+              type="button"
+              onClick={() => setPendingImage(null)}
+              className="text-xs font-medium text-neutral-400 transition hover:text-neutral-700"
+            >
+              Remove photo
+            </button>
+          </div>
+        )}
         <div className="flex items-center gap-2.5 rounded-full border border-neutral-200 bg-neutral-50 px-5 py-3 transition focus-within:border-neutral-300 focus-within:bg-white">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              handleImageSelect(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={sending}
+            aria-label="Attach a photo"
+            title="Attach a photo"
+            className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-white text-neutral-500 transition hover:text-neutral-900"
+          >
+            <PaperclipIcon />
+          </button>
           {micSupported && !voiceModeOn && (
             <button
               type="button"
@@ -616,9 +696,9 @@ export function ChatDemoPanel() {
           />
           <button
             type="submit"
-            disabled={sending || !input.trim()}
+            disabled={sending || (!input.trim() && !pendingImage)}
             className="rounded-full px-5 py-2 text-sm font-medium text-white transition disabled:bg-neutral-200 disabled:text-neutral-400"
-            style={!sending && input.trim() ? { backgroundColor: "#146EF5" } : undefined}
+            style={!sending && (input.trim() || pendingImage) ? { backgroundColor: "#146EF5" } : undefined}
           >
             Send
           </button>

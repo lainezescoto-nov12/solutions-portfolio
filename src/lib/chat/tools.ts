@@ -3,7 +3,7 @@
 // deliberate scope decision for this build, see agents.ts stack labels).
 // Same shape as the voice agent's tools regardless: typed functions,
 // registered once, the model decides when to call them.
-import { fetchAllDevices } from "@/lib/shopify/client";
+import { fetchAllDevices, findOrder } from "@/lib/shopify/client";
 import { mockTroubleshootingSteps, mockPolicyKB } from "@/lib/mock-data/catalog";
 
 export const toolDefinitions = [
@@ -53,6 +53,42 @@ export const toolDefinitions = [
         },
       },
       required: ["question"],
+    },
+  },
+  {
+    name: "check_order_status",
+    description:
+      "Look up a real order's fulfillment and tracking status in Shopify. Use this for any where's-my-order question, and as the first step of a damaged-item report. Never guess a shipping or fulfillment status -- always call this.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        identifier: {
+          type: "string",
+          description:
+            "The order number (e.g. '#1001' or '1001') or the customer's email address, whichever the customer gave you.",
+        },
+      },
+      required: ["identifier"],
+    },
+  },
+  {
+    name: "open_replacement_case",
+    description:
+      "Open a replacement/refund case for a damaged or incorrect item after you've looked at any photo the customer shared and understand the issue. This logs the case for a human agent to action -- it does NOT issue a refund or replacement itself, and you must tell the customer that plainly (a person on the team will complete it, not you).",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        orderIdentifier: {
+          type: "string",
+          description: "The order number or email this case is for, as given by the customer.",
+        },
+        issueDescription: {
+          type: "string",
+          description:
+            "A concise description of the damage/issue, written from what the customer told you and, if they shared one, what you observed in their photo.",
+        },
+      },
+      required: ["orderIdentifier", "issueDescription"],
     },
   },
 ] as const;
@@ -151,6 +187,46 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
       };
     }
     return { found: true, matchedQuestion: scored[0].entry.question, answer: scored[0].entry.answer };
+  }
+
+  if (name === "check_order_status") {
+    const identifier = String(input.identifier ?? "");
+    const order = await findOrder(identifier);
+    if (!order) {
+      return {
+        found: false,
+        note: "No order matched that number/email in the live store. Ask the customer to double check it, but you can still continue helping with their issue.",
+      };
+    }
+    return {
+      found: true,
+      orderNumber: order.name,
+      placedAt: order.createdAt,
+      fulfillmentStatus: order.fulfillmentStatus,
+      paymentStatus: order.financialStatus,
+      trackingUrl: order.trackingUrl,
+      trackingNumber: order.trackingNumber,
+      items: order.lineItemTitles,
+    };
+  }
+
+  if (name === "open_replacement_case") {
+    const orderIdentifier = String(input.orderIdentifier ?? "");
+    const issueDescription = String(input.issueDescription ?? "");
+    // Deliberately not a Shopify mutation -- this is a demo running on a
+    // real store anyone can reach from the public site, so nothing here
+    // actually refunds or replaces the order. It logs a case number a
+    // human would action, same trust boundary as the voice agent's
+    // destructive-action tools.
+    const caseId = `RC-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    console.log(`[open_replacement_case] ${caseId} for ${orderIdentifier}: ${issueDescription}`);
+    return {
+      caseId,
+      orderIdentifier,
+      issueDescription,
+      status: "logged_for_human_review",
+      note: "This case was logged, not actioned -- no refund or replacement was issued automatically. A team member completes it from here.",
+    };
   }
 
   throw new Error(`Unknown tool: ${name}`);
