@@ -145,6 +145,41 @@ function XIcon() {
   );
 }
 
+function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13M10 11v6M14 11v6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+// Compact 3-bar equalizer for the voice-mode status circle -- reuses the
+// same waveform-bar keyframe as the Ridgeline VoiceDemoPanel's full-size
+// Waveform, just scaled down to fit inside a small round badge.
+function MiniBars({ colorClassName }: { colorClassName: string }) {
+  return (
+    <div className="flex h-3 items-center justify-center gap-[2px]">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className={`w-[2.5px] rounded-full ${colorClassName}`}
+          style={{
+            height: "100%",
+            animation: `waveform-bar ${0.5 + i * 0.15}s ease-in-out infinite`,
+            animationDelay: `${i * 0.08}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function SpeakerIcon({ muted }: { muted: boolean }) {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -190,19 +225,20 @@ function ProductCarousel({ products }: { products: ProductCard[] }) {
   );
 }
 
+const INITIAL_MESSAGE: Message = {
+  role: "assistant",
+  content:
+    "Hi, I'm Haven AI Support Agent. Ask me to recommend a device, or describe a problem you're running into.",
+};
+
 export function ChatDemoPanel() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content:
-        "Hi, I'm Haven AI Support Agent. Ask me to recommend a device, or describe a problem you're running into.",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [lastToolCalls, setLastToolCalls] = useState<ToolCall[]>([]);
   const [error, setError] = useState("");
   const [listening, setListening] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
   const [micSupported, setMicSupported] = useState(false);
   const [voiceModeOn, setVoiceModeOn] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -214,7 +250,7 @@ export function ChatDemoPanel() {
   // `messages` state variable -- that closure's snapshot goes stale the
   // moment a later render updates it. This ref is mutated in place, so
   // every closure, however old, reads the live conversation.
-  const messagesRef = useRef<Message[]>(messages);
+  const messagesRef = useRef<Message[]>([INITIAL_MESSAGE]);
   // Voice mode is a real ongoing mode now (enter via waveform, exit only
   // via the X button), not a per-message toggle -- recognition callbacks
   // and the post-reply "resume listening" step run async, so they need a
@@ -236,6 +272,11 @@ export function ChatDemoPanel() {
         resolve();
         return;
       }
+      setSpeaking(true);
+      const finish = () => {
+        setSpeaking(false);
+        resolve();
+      };
       (async () => {
         try {
           audioRef.current?.pause();
@@ -247,18 +288,18 @@ export function ChatDemoPanel() {
           if (!res.ok) {
             const body = await res.text().catch(() => "");
             console.error(`/api/tts failed (${res.status}):`, body);
-            resolve();
+            finish();
             return;
           }
           const blob = await res.blob();
           const audio = new Audio(URL.createObjectURL(blob));
           audioRef.current = audio;
-          audio.onended = () => resolve();
-          audio.onerror = () => resolve();
+          audio.onended = finish;
+          audio.onerror = finish;
           await audio.play();
         } catch (err) {
           console.error("Voice playback failed:", err);
-          resolve();
+          finish();
         }
       })();
     });
@@ -330,6 +371,16 @@ export function ChatDemoPanel() {
     audioRef.current?.pause();
     setVoiceMode(false);
     setListening(false);
+    setSpeaking(false);
+  }
+
+  function clearConversation() {
+    audioRef.current?.pause();
+    messagesRef.current = [INITIAL_MESSAGE];
+    setMessages([INITIAL_MESSAGE]);
+    setLastToolCalls([]);
+    setError("");
+    setInput("");
   }
 
   async function send(text: string) {
@@ -519,12 +570,17 @@ export function ChatDemoPanel() {
           {micSupported && voiceModeOn && (
             <div className="flex flex-none items-center gap-1.5">
               <div
-                title={listening ? "Listening…" : "In voice mode"}
-                className={`flex h-7 w-7 items-center justify-center rounded-full transition ${
-                  listening ? "animate-pulse bg-red-500 text-white" : "bg-neutral-200 text-neutral-600"
+                title={speaking ? "Speaking…" : listening ? "Listening…" : "In voice mode"}
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-white transition ${
+                  speaking ? "" : listening ? "bg-red-500" : "bg-neutral-200 text-neutral-600"
                 }`}
+                style={speaking ? { backgroundColor: "#146EF5" } : undefined}
               >
-                <MicIcon />
+                {speaking || listening ? (
+                  <MiniBars colorClassName="bg-white" />
+                ) : (
+                  <MicIcon />
+                )}
               </div>
               <button
                 type="button"
@@ -542,11 +598,13 @@ export function ChatDemoPanel() {
             onChange={(e) => setInput(e.target.value)}
             disabled={sending}
             placeholder={
-              listening
-                ? "Listening…"
-                : voiceModeOn
-                  ? "In voice mode — type or wait to speak…"
-                  : "Ask about a device, or describe a problem…"
+              speaking
+                ? "Speaking…"
+                : listening
+                  ? "Listening…"
+                  : voiceModeOn
+                    ? "In voice mode — type or wait to speak…"
+                    : "Ask about a device, or describe a problem…"
             }
             className="flex-1 bg-transparent text-[15px] text-neutral-900 outline-none placeholder:text-neutral-400"
           />
@@ -557,6 +615,16 @@ export function ChatDemoPanel() {
             style={!sending && input.trim() ? { backgroundColor: "#146EF5" } : undefined}
           >
             Send
+          </button>
+          <button
+            type="button"
+            onClick={clearConversation}
+            disabled={sending}
+            aria-label="Clear conversation"
+            title="Clear conversation"
+            className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700 disabled:opacity-40"
+          >
+            <TrashIcon />
           </button>
         </div>
       </form>
