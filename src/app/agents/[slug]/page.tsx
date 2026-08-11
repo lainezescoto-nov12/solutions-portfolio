@@ -26,7 +26,7 @@ export default async function AgentPage({
     <>
       <AgentHeader agent={agent} />
       <AgentStats agent={agent} />
-      <section className="mx-auto grid max-w-5xl gap-8 px-6 py-16 sm:grid-cols-2">
+      <section className="mx-auto grid max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[3fr_2fr]">
         <div>
           {agent.slug === "voice" && <VoiceDemoPanel agent={agent} />}
           {agent.slug === "chat" && <ChatDemoPanel />}

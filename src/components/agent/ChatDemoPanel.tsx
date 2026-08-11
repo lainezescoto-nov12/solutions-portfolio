@@ -274,7 +274,7 @@ export function ChatDemoPanel() {
   }
 
   return (
-    <div className="flex h-[520px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg shadow-neutral-200/60">
+    <div className="flex h-[calc(100vh-260px)] min-h-[640px] max-h-[820px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg shadow-neutral-200/60">
       <div
         className="flex items-center justify-between gap-2.5 px-5 py-3.5"
         style={{ background: "linear-gradient(135deg, #146EF5 0%, #0a2472 100%)" }}
@@ -315,7 +315,7 @@ export function ChatDemoPanel() {
         )}
       </div>
 
-      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-neutral-50/50 p-5">
+      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto bg-neutral-50/50 p-6">
         {messages.map((m, i) => (
           <div
             key={i}
@@ -325,16 +325,16 @@ export function ChatDemoPanel() {
               <Image
                 src="/haven-home-tech-logo.png"
                 alt=""
-                width={22}
-                height={22}
+                width={26}
+                height={26}
                 className="mb-1 flex-none rounded-full"
               />
             )}
             <div
               className={
                 m.role === "assistant"
-                  ? "max-w-[80%] rounded-2xl rounded-tl-sm bg-white px-4 py-2.5 text-sm text-neutral-700 shadow-sm ring-1 ring-neutral-200"
-                  : "max-w-[85%] rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm text-white shadow-sm"
+                  ? "max-w-[75%] rounded-2xl rounded-tl-sm bg-white px-5 py-3 text-[15px] leading-relaxed text-neutral-700 shadow-sm ring-1 ring-neutral-200"
+                  : "max-w-[75%] rounded-2xl rounded-tr-sm px-5 py-3 text-[15px] leading-relaxed text-white shadow-sm"
               }
               style={m.role === "user" ? { backgroundColor: "#146EF5" } : undefined}
             >
@@ -348,11 +348,11 @@ export function ChatDemoPanel() {
             <Image
               src="/haven-home-tech-logo.png"
               alt=""
-              width={22}
-              height={22}
+              width={26}
+              height={26}
               className="mb-1 flex-none rounded-full"
             />
-            <div className="max-w-[80%] rounded-2xl rounded-tl-sm bg-white px-4 py-2.5 text-sm text-neutral-400 shadow-sm ring-1 ring-neutral-200">
+            <div className="max-w-[75%] rounded-2xl rounded-tl-sm bg-white px-5 py-3 text-[15px] text-neutral-400 shadow-sm ring-1 ring-neutral-200">
               Thinking…
             </div>
           </div>
@@ -385,9 +385,9 @@ export function ChatDemoPanel() {
           e.preventDefault();
           send(input);
         }}
-        className="border-t border-neutral-200 bg-white p-3.5"
+        className="border-t border-neutral-200 bg-white p-4"
       >
-        <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 px-4 py-2.5 transition focus-within:border-neutral-300 focus-within:bg-white">
+        <div className="flex items-center gap-2.5 rounded-full border border-neutral-200 bg-neutral-50 px-5 py-3 transition focus-within:border-neutral-300 focus-within:bg-white">
           {micSupported && (
             <button
               type="button"
@@ -411,12 +411,12 @@ export function ChatDemoPanel() {
             onChange={(e) => setInput(e.target.value)}
             disabled={sending}
             placeholder={listening ? "Listening…" : "Ask about a device, or describe a problem…"}
-            className="flex-1 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400"
+            className="flex-1 bg-transparent text-[15px] text-neutral-900 outline-none placeholder:text-neutral-400"
           />
           <button
             type="submit"
             disabled={sending || !input.trim()}
-            className="rounded-full px-4 py-1.5 text-sm font-medium text-white transition disabled:bg-neutral-200 disabled:text-neutral-400"
+            className="rounded-full px-5 py-2 text-sm font-medium text-white transition disabled:bg-neutral-200 disabled:text-neutral-400"
             style={!sending && input.trim() ? { backgroundColor: "#146EF5" } : undefined}
           >
             Send
