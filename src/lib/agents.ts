@@ -65,7 +65,7 @@ export const agents: Agent[] = [
     industry: "Haven Home Tech — Smart Home / IoT",
     tagline: "A chat AI agent that provides product recommendations and troubleshooting guidance, and switches into a hands-free voice mode you can talk over like a real conversation.",
     status: "in-progress",
-    statusLabel: "In progress — WISMO build",
+    statusLabel: "In progress",
     summary:
       "A chat agent for a smart-home device company covering three jobs: recommending the right product for a customer's setup, troubleshooting connectivity or pairing issues step by step, and handling a where's-my-order case end to end, including a damaged-item report with real photo analysis. Product recommendations and order lookups query a real Shopify store's live data via the Admin API — not mocked data — while troubleshooting guidance comes from a small curated knowledge base. Click the waveform icon and it becomes hands-free: browser speech recognition listens, ElevenLabs text-to-speech replies out loud, and it supports barge-in, so you can cut it off mid-sentence the way you'd interrupt a person.",
     stats: [
