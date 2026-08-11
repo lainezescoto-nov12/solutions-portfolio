@@ -21,6 +21,7 @@ export type Agent = {
   stats: AgentStat[];
   stack: string[];
   samplePrompts: SamplePrompt[];
+  samplePromptsIntro?: string;
   externalUrl?: string;
   liveCapabilities?: string[];
 };
@@ -66,7 +67,9 @@ export const agents: Agent[] = [
       { label: "Catalog", value: "Live Shopify store" },
       { label: "Tool-calling", value: "Claude" },
     ],
-    stack: ["Next.js", "Claude tool-calling", "Shopify Admin API", "Claude Haiku 4.5"],
+    stack: ["Next.js", "Claude tool-calling", "Shopify Admin API", "Notion (KB)", "Claude Haiku 4.5"],
+    samplePromptsIntro:
+      "Haven Home Tech sells smart-home devices — cameras, sensors, hubs, thermostats, and locks. You don't need to know the exact product names to try these:",
     samplePrompts: [
       { label: "Product recommendation", prompt: "\"I want a camera for my front porch that works without running new wiring.\"" },
       { label: "Troubleshooting", prompt: "\"My hub shows online but the sensor keeps dropping offline every few hours.\"" },

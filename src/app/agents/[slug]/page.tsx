@@ -36,7 +36,7 @@ export default async function AgentPage({
             </ComingSoonOverlay>
           )}
         </div>
-        <SamplePrompts prompts={agent.samplePrompts} />
+        <SamplePrompts prompts={agent.samplePrompts} intro={agent.samplePromptsIntro} />
       </section>
       <MegaFooter />
     </>

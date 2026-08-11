@@ -4,26 +4,49 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 type Message = { role: "user" | "assistant"; content: string };
-type ToolCall = { name: string; input: unknown; output: unknown };
+type ToolCall = { name: string; input: unknown; output: unknown; label: string };
 
-const TOOL_LABELS: Record<string, string> = {
-  search_devices: "Searching the live product catalog",
-  get_troubleshooting_steps: "Checking troubleshooting knowledge base",
-  get_policy_answer: "Checking returns & warranty policy",
+const SHOPIFY_STORE_URL = "https://haven-home-tech.myshopify.com";
+
+// Several phrasings per tool so "Behind the scenes" doesn't read like a
+// robotic fixed label every time -- picked once per tool call, not
+// re-randomized on every render.
+const TOOL_LABEL_VARIANTS: Record<string, string[]> = {
+  search_devices: [
+    "Searching the live Shopify catalog",
+    "Checking real-time inventory",
+    "Looking up matching products in the store",
+  ],
+  get_troubleshooting_steps: [
+    "Retrieving answers from the KB",
+    "Pulling troubleshooting steps from the knowledge base",
+    "Checking the KB for a fix",
+  ],
+  get_policy_answer: [
+    "Retrieving answers from the KB",
+    "Checking policy details in the knowledge base",
+    "Looking up the KB for policy info",
+  ],
 };
+
+function pickToolLabel(name: string): string {
+  const variants = TOOL_LABEL_VARIANTS[name];
+  if (!variants) return name;
+  return variants[Math.floor(Math.random() * variants.length)];
+}
 
 // Browser-native speech-to-text/text-to-speech, not a second ElevenLabs
 // voice agent -- a spoken message is sent straight through as a chat
 // bubble (never staged in the text input), and once voice mode is on,
-// replies are read aloud too. Still the same Claude tool-calling backend
-// underneath, no parallel voice pipeline.
+// replies are read aloud too (via ElevenLabs TTS, see /api/tts). Still
+// the same Claude tool-calling backend underneath, no parallel voice
+// pipeline.
 //
 // Honest limitation: the Web Speech API has to be told which language to
 // listen for -- it can't detect Spanish vs English from audio the way a
-// server-side pipeline can. There's no visible toggle for that (spoken
-// language switching mid-call isn't something this approach can promise),
-// so recognition defaults to the browser's own language setting. Typed
-// messages remain fully bilingual via the system prompt regardless.
+// server-side pipeline can. Recognition defaults to the browser's own
+// language setting. Typed messages remain fully bilingual via the system
+// prompt regardless.
 type SpeechRecognitionLike = {
   lang: string;
   continuous: boolean;
@@ -44,12 +67,62 @@ function getSpeechRecognition(): (new () => SpeechRecognitionLike) | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+function WaveformIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M3 12h2l2-6 3 14 3-11 2 7 2-4h4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function MicIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        d="M19 11a7 7 0 0 1-14 0M12 18v3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function SpeakerIcon({ muted }: { muted: boolean }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M4 9v6h4l5 4V5L8 9H4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+      {!muted ? (
+        <path
+          d="M17 8a6 6 0 0 1 0 8"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+      ) : (
+        <path d="M17 9l4 6M21 9l-4 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      )}
+    </svg>
+  );
+}
+
 export function ChatDemoPanel() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
       content:
-        "Hi, I'm the Haven Home Tech support assistant. Ask me to recommend a device, or describe a problem you're running into.",
+        "Hi, I'm Haven AI Support Agent. Ask me to recommend a device, or describe a problem you're running into.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -59,11 +132,13 @@ export function ChatDemoPanel() {
   const [listening, setListening] = useState(false);
   const [micSupported, setMicSupported] = useState(false);
   const [voiceModeOn, setVoiceModeOn] = useState(false);
+  const [muted, setMuted] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   async function speak(text: string) {
+    if (muted) return;
     try {
       audioRef.current?.pause();
       const res = await fetch("/api/tts", {
@@ -99,12 +174,7 @@ export function ChatDemoPanel() {
     };
   }, []);
 
-  function toggleMic() {
-    if (listening) {
-      recognitionRef.current?.stop();
-      return;
-    }
-
+  function startListening() {
     const SpeechRecognitionCtor = getSpeechRecognition();
     if (!SpeechRecognitionCtor) return;
 
@@ -126,6 +196,16 @@ export function ChatDemoPanel() {
     recognitionRef.current = recognition;
     setListening(true);
     recognition.start();
+  }
+
+  function handleMicClick() {
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    // Not yet in voice mode -- this tap is "switch to voice mode."
+    // Already in voice mode -- start listening for the next voice turn.
+    startListening();
   }
 
   async function send(text: string, spoken = false) {
@@ -150,7 +230,13 @@ export function ChatDemoPanel() {
         setError(data.error ?? "Something went wrong.");
         return;
       }
-      setLastToolCalls(data.toolCalls ?? []);
+      const calls: ToolCall[] = (data.toolCalls ?? []).map(
+        (c: { name: string; input: unknown; output: unknown }) => ({
+          ...c,
+          label: pickToolLabel(c.name),
+        })
+      );
+      setLastToolCalls(calls);
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
       if (voiceModeOn || spoken) speak(data.reply);
     } catch {
@@ -161,33 +247,44 @@ export function ChatDemoPanel() {
   }
 
   return (
-    <div className="flex h-[480px] flex-col rounded-2xl border border-neutral-200 bg-white">
-      <div className="flex items-center justify-between gap-2.5 border-b border-neutral-200 px-5 py-3">
+    <div className="flex h-[520px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg shadow-neutral-200/60">
+      <div className="flex items-center justify-between gap-2.5 border-b border-neutral-200 bg-neutral-950 px-5 py-3.5">
         <div className="flex items-center gap-2.5">
           <Image
             src="/haven-home-tech-logo.png"
-            alt="Haven Home Tech"
-            width={28}
-            height={28}
-            className="rounded-full"
+            alt="Haven AI Support Agent"
+            width={30}
+            height={30}
+            className="rounded-full ring-2 ring-white/20"
           />
-          <p className="text-sm font-semibold text-neutral-950">Haven Home Tech</p>
+          <div>
+            <p className="text-sm font-semibold text-white">Haven AI Support Agent</p>
+            <a
+              href={SHOPIFY_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] text-white/50 hover:text-white/80"
+            >
+              Connected to a live Shopify store ↗
+            </a>
+          </div>
         </div>
         {voiceModeOn && (
           <button
             type="button"
             onClick={() => {
               audioRef.current?.pause();
-              setVoiceModeOn(false);
+              setMuted((m) => !m);
             }}
-            className="rounded-full border border-neutral-200 px-2.5 py-1 text-[11px] font-medium text-neutral-500 hover:text-neutral-900"
+            aria-label={muted ? "Unmute voice replies" : "Mute voice replies"}
+            className="flex h-7 w-7 flex-none items-center justify-center rounded-full text-white/60 transition hover:text-white"
           >
-            🔊 Voice replies on — tap to mute
+            <SpeakerIcon muted={muted} />
           </button>
         )}
       </div>
 
-      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-6">
+      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-neutral-50/50 p-5">
         {messages.map((m, i) => (
           <div
             key={i}
@@ -205,8 +302,8 @@ export function ChatDemoPanel() {
             <div
               className={
                 m.role === "assistant"
-                  ? "max-w-[80%] rounded-2xl rounded-tl-sm bg-neutral-100 px-4 py-3 text-sm text-neutral-700"
-                  : "max-w-[85%] rounded-2xl rounded-tr-sm px-4 py-3 text-sm text-white"
+                  ? "max-w-[80%] rounded-2xl rounded-tl-sm bg-white px-4 py-2.5 text-sm text-neutral-700 shadow-sm ring-1 ring-neutral-200"
+                  : "max-w-[85%] rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm text-white shadow-sm"
               }
               style={m.role === "user" ? { backgroundColor: "#146EF5" } : undefined}
             >
@@ -224,14 +321,14 @@ export function ChatDemoPanel() {
               height={22}
               className="mb-1 flex-none rounded-full"
             />
-            <div className="max-w-[80%] rounded-2xl rounded-tl-sm bg-neutral-100 px-4 py-3 text-sm text-neutral-400">
+            <div className="max-w-[80%] rounded-2xl rounded-tl-sm bg-white px-4 py-2.5 text-sm text-neutral-400 shadow-sm ring-1 ring-neutral-200">
               Thinking…
             </div>
           </div>
         )}
 
         {lastToolCalls.length > 0 && (
-          <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+          <div className="rounded-xl border border-neutral-200 bg-white p-3 shadow-sm">
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
               Behind the scenes
             </p>
@@ -239,7 +336,7 @@ export function ChatDemoPanel() {
               {lastToolCalls.map((call, i) => (
                 <li key={i} className="flex items-center gap-2 text-xs text-neutral-600">
                   <span className="text-emerald-500">✓</span>
-                  <span>{TOOL_LABELS[call.name] ?? call.name} — completed</span>
+                  <span>{call.label} — completed</span>
                 </li>
               ))}
             </ul>
@@ -254,34 +351,25 @@ export function ChatDemoPanel() {
           e.preventDefault();
           send(input);
         }}
-        className="border-t border-neutral-200 p-4"
+        className="border-t border-neutral-200 bg-white p-3.5"
       >
-        <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 px-4 py-2.5">
+        <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 px-4 py-2.5 transition focus-within:border-neutral-300 focus-within:bg-white">
           {micSupported && (
             <button
               type="button"
-              onClick={toggleMic}
+              onClick={handleMicClick}
               disabled={sending}
-              aria-label={listening ? "Stop recording" : "Start voice input"}
+              aria-label={
+                listening ? "Stop recording" : voiceModeOn ? "Speak again" : "Switch to voice mode"
+              }
+              title={voiceModeOn ? "Speak again" : "Switch to voice mode"}
               className={`flex h-7 w-7 flex-none items-center justify-center rounded-full transition ${
                 listening
                   ? "bg-red-500 text-white"
                   : "bg-white text-neutral-500 hover:text-neutral-900"
               }`}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path
-                  d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M19 11a7 7 0 0 1-14 0M12 18v3"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
+              {voiceModeOn ? <MicIcon /> : <WaveformIcon />}
             </button>
           )}
           <input

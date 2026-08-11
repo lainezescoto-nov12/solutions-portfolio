@@ -3,7 +3,7 @@
 // deliberate scope decision for this build, see agents.ts stack labels).
 // Same shape as the voice agent's tools regardless: typed functions,
 // registered once, the model decides when to call them.
-import { searchDevices } from "@/lib/shopify/client";
+import { fetchAllDevices } from "@/lib/shopify/client";
 import { mockTroubleshootingSteps, mockPolicyKB } from "@/lib/mock-data/catalog";
 
 export const toolDefinitions = [
@@ -14,13 +14,13 @@ export const toolDefinitions = [
     input_schema: {
       type: "object" as const,
       properties: {
-        query: {
+        need: {
           type: "string",
           description:
-            "Shopify search syntax fragment describing what to look for, e.g. product_type:Camera, or tag:no-c-wire, or a plain keyword like 'thermostat'. Combine multiple constraints with AND, e.g. \"product_type:Camera AND tag:outdoor\".",
+            "A plain-language description of what the customer wants, e.g. 'camera for front porch, no wiring' or 'thermostat that works without a C-wire'. Do not write search syntax or filters -- just describe the need in plain words, matching is handled automatically.",
         },
       },
-      required: ["query"],
+      required: ["need"],
     },
   },
   {
@@ -57,22 +57,46 @@ export const toolDefinitions = [
   },
 ] as const;
 
+// Normalizes hyphens to spaces before splitting so a tag like
+// "no-wiring-required" tokenizes the same way a customer's plain-language
+// "no wiring required" does -- this is the fix for the bug where Shopify's
+// own query syntax (tag:no-wiring-required) failed to match reliably.
 function scoreKeywordMatch(query: string, target: string): number {
-  const queryWords = new Set(query.toLowerCase().split(/\s+/));
-  const targetWords = new Set(target.toLowerCase().split(/\s+/));
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/-/g, " ")
+      .replace(/[^a-z0-9\s]/g, "")
+      .split(/\s+/);
+  const queryWords = new Set(normalize(query));
+  const targetWords = new Set(normalize(target));
   let overlap = 0;
-  for (const w of queryWords) if (targetWords.has(w)) overlap++;
+  for (const w of queryWords) if (w && targetWords.has(w)) overlap++;
   return overlap;
 }
 
 export async function runTool(name: string, input: Record<string, unknown>): Promise<unknown> {
   if (name === "search_devices") {
-    const query = String(input.query ?? "");
-    const devices = await searchDevices(query);
-    if (devices.length === 0) {
+    const need = String(input.need ?? "");
+    const devices = await fetchAllDevices();
+
+    const scored = devices
+      .map((d) => {
+        // Tags count twice -- they're curated signal (explicitly meant to
+        // describe use-case fit), worth more than an incidental word match
+        // in the free-text description.
+        const blob = [d.title, d.productType, d.description, d.tags.join(" "), d.tags.join(" ")].join(" ");
+        return { device: d, score: scoreKeywordMatch(need, blob) };
+      })
+      .filter((s) => s.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map((s) => s.device);
+
+    if (scored.length === 0) {
       return { found: false, note: "No devices matched that search in the live catalog." };
     }
-    return { found: true, devices };
+    return { found: true, devices: scored };
   }
 
   if (name === "get_troubleshooting_steps") {

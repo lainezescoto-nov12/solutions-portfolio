@@ -84,7 +84,7 @@ export type ShopifyDevice = {
 
 const SEARCH_PRODUCTS_QUERY = /* GraphQL */ `
   query SearchProducts($query: String!) {
-    products(first: 10, query: $query) {
+    products(first: 25, query: $query) {
       edges {
         node {
           id
@@ -103,16 +103,19 @@ const SEARCH_PRODUCTS_QUERY = /* GraphQL */ `
   }
 `;
 
-// Vendor is pinned to Haven Home Tech so a shared/dev store could later
-// hold other agents' catalogs without cross-contaminating results.
-export async function searchDevices(searchTerms: string): Promise<ShopifyDevice[]> {
-  const query = searchTerms
-    ? `vendor:"Haven Home Tech" AND (${searchTerms})`
-    : `vendor:"Haven Home Tech"`;
-
+// Fetches the whole Haven Home Tech catalog (vendor-pinned so a shared/dev
+// store could later hold other agents' catalogs without cross-contaminating
+// results). Deliberately not filtered by Shopify's own query syntax here --
+// letting the LLM write `tag:no-wiring-required`-style filters was fragile
+// in practice (Shopify's search parser doesn't reliably match hyphenated
+// multi-word tag values that way, and there was no fallback when a filtered
+// query returned zero results). Matching against customer intent now
+// happens in code instead, in src/lib/chat/tools.ts, same pattern already
+// used for the troubleshooting/policy KBs.
+export async function fetchAllDevices(): Promise<ShopifyDevice[]> {
   const data = await adminGraphql<{
     products: { edges: { node: { id: string; title: string; productType: string; description: string; tags: string[]; priceRangeV2: { minVariantPrice: { amount: string } } } }[] };
-  }>(SEARCH_PRODUCTS_QUERY, { query });
+  }>(SEARCH_PRODUCTS_QUERY, { query: `vendor:"Haven Home Tech"` });
 
   return data.products.edges.map(({ node }) => ({
     id: node.id,
