@@ -73,7 +73,7 @@ export const agents: Agent[] = [
     samplePrompts: [
       { label: "Product recommendation", prompt: "\"I want a camera for my front porch that works without running new wiring.\"" },
       { label: "Troubleshooting", prompt: "\"My hub shows online but the sensor keeps dropping offline every few hours.\"" },
-      { label: "Compatibility check", prompt: "\"Will your thermostat work with a system that has no C-wire?\"" },
+      { label: "Compatibility check", prompt: "\"I've got an old Honeywell thermostat and my HVAC system doesn't have a C-wire, would your thermostat still work for me?\"" },
       { label: "Returns & warranty", prompt: "\"What's your return policy, and how long is the warranty?\"" },
     ],
   },

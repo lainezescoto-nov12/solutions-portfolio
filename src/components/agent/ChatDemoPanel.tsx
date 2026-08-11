@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 type Message = { role: "user" | "assistant"; content: string };
-type ToolCall = { name: string; input: unknown; output: unknown; label: string };
+type ToolCall = { name: string; input: unknown; output: unknown; label: string; detail: string };
 
 const SHOPIFY_STORE_URL = "https://haven-home-tech.myshopify.com";
 
@@ -33,6 +33,29 @@ function pickToolLabel(name: string): string {
   const variants = TOOL_LABEL_VARIANTS[name];
   if (!variants) return name;
   return variants[Math.floor(Math.random() * variants.length)];
+}
+
+// Pulls a real detail out of the tool's actual output so this reads as
+// live telemetry rather than a fixed decorative string -- e.g. how many
+// products actually matched, which KB entry actually got used.
+function toolResultDetail(name: string, output: unknown): string {
+  const o = output as Record<string, unknown> | undefined;
+  if (!o) return "";
+
+  if (name === "search_devices") {
+    if (o.found === false) return "no matches";
+    const devices = Array.isArray(o.devices) ? o.devices : [];
+    return `${devices.length} match${devices.length === 1 ? "" : "es"} found`;
+  }
+  if (name === "get_troubleshooting_steps") {
+    if (o.found === false) return "no matching entry";
+    return typeof o.issue === "string" ? `matched "${o.issue}"` : "matched";
+  }
+  if (name === "get_policy_answer") {
+    if (o.found === false) return "no matching entry";
+    return typeof o.matchedQuestion === "string" ? `matched "${o.matchedQuestion}"` : "matched";
+  }
+  return "";
 }
 
 // Browser-native speech-to-text/text-to-speech, not a second ElevenLabs
@@ -234,11 +257,15 @@ export function ChatDemoPanel() {
         (c: { name: string; input: unknown; output: unknown }) => ({
           ...c,
           label: pickToolLabel(c.name),
+          detail: toolResultDetail(c.name, c.output),
         })
       );
       setLastToolCalls(calls);
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
-      if (voiceModeOn || spoken) speak(data.reply);
+      // Only speak when THIS turn was voice-triggered -- voiceModeOn just
+      // controls which icon shows and whether the mute toggle is visible,
+      // it should not make typed messages get spoken replies too.
+      if (spoken && !muted) speak(data.reply);
     } catch {
       setError("Couldn't reach the chat backend.");
     } finally {
@@ -340,7 +367,10 @@ export function ChatDemoPanel() {
               {lastToolCalls.map((call, i) => (
                 <li key={i} className="flex items-center gap-2 text-xs text-neutral-600">
                   <span className="text-emerald-500">✓</span>
-                  <span>{call.label} — completed</span>
+                  <span>
+                    {call.label}
+                    {call.detail ? ` — ${call.detail}` : " — completed"}
+                  </span>
                 </li>
               ))}
             </ul>
