@@ -6,6 +6,10 @@ export type AgentStat = {
 export type SamplePrompt = {
   label: string;
   prompt: string;
+  // Optional answer key for multi-turn flows (e.g. troubleshooting, which
+  // now paces one step at a time) -- what to say back at each step so
+  // someone testing it isn't stuck guessing after the first exchange.
+  followUps?: string[];
 };
 
 export type AgentStatus = "live" | "in-progress";
@@ -72,7 +76,16 @@ export const agents: Agent[] = [
       "Haven Home Tech sells smart-home devices — cameras, sensors, hubs, thermostats, and locks. You don't need to know the exact product names to try these:",
     samplePrompts: [
       { label: "Product recommendation", prompt: "\"I want a camera for my front porch that works without running new wiring.\"" },
-      { label: "Troubleshooting", prompt: "\"My hub shows online but the sensor keeps dropping offline every few hours.\"" },
+      {
+        label: "Troubleshooting",
+        prompt: "\"My hub shows online but the sensor keeps dropping offline every few hours.\"",
+        followUps: [
+          "It's showing two battery lines",
+          "Yes, about 15 feet away with one wall between them",
+          "Okay, I did that, it's blinking blue now",
+          "I checked, there are a lot of other networks nearby",
+        ],
+      },
       { label: "Compatibility check", prompt: "\"I've got an old Honeywell thermostat and my HVAC system doesn't have a C-wire, would your thermostat still work for me?\"" },
       { label: "Returns & warranty", prompt: "\"What's your return policy, and how long is the warranty?\"" },
     ],

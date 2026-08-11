@@ -14,6 +14,20 @@ export function SamplePrompts({ prompts, intro }: { prompts: SamplePrompt[]; int
               {p.label}
             </p>
             <p className="mt-1 text-sm text-neutral-700">{p.prompt}</p>
+            {p.followUps && p.followUps.length > 0 && (
+              <div className="mt-2 rounded-lg border border-neutral-200 bg-white p-3">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-neutral-400">
+                  It&apos;ll ask one thing at a time — reply with these, in order
+                </p>
+                <ol className="mt-1.5 list-decimal space-y-1 pl-4">
+                  {p.followUps.map((f, i) => (
+                    <li key={i} className="text-xs text-neutral-600">
+                      &ldquo;{f}&rdquo;
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
           </li>
         ))}
       </ul>
