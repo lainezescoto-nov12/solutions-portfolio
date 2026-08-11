@@ -5,6 +5,7 @@
 // registered once, the model decides when to call them.
 import { fetchAllDevices, findOrder } from "@/lib/shopify/client";
 import { mockTroubleshootingSteps, mockPolicyKB } from "@/lib/mock-data/catalog";
+import { sendReplacementCaseEmail } from "@/lib/email/resend";
 
 export const toolDefinitions = [
   {
@@ -74,7 +75,7 @@ export const toolDefinitions = [
   {
     name: "open_replacement_case",
     description:
-      "Open a replacement/refund case for a damaged or incorrect item after you've looked at any photo the customer shared and understand the issue. This logs the case for a human agent to action -- it does NOT issue a refund or replacement itself, and you must tell the customer that plainly (a person on the team will complete it, not you).",
+      "Open a replacement/refund case for a damaged or incorrect item after you've looked at any photo the customer shared and understand the issue. This logs the case for a human agent to action and emails the customer a confirmation -- it does NOT issue a refund or replacement itself, and you must tell the customer that plainly (a person on the team will complete it, not you).",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -87,8 +88,13 @@ export const toolDefinitions = [
           description:
             "A concise description of the damage/issue, written from what the customer told you and, if they shared one, what you observed in their photo.",
         },
+        customerEmail: {
+          type: "string",
+          description:
+            "The email address to send the case confirmation to. Ask the customer for this if you don't already have it (e.g. they hadn't given an email as their order identifier).",
+        },
       },
-      required: ["orderIdentifier", "issueDescription"],
+      required: ["orderIdentifier", "issueDescription", "customerEmail"],
     },
   },
 ] as const;
@@ -213,19 +219,29 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
   if (name === "open_replacement_case") {
     const orderIdentifier = String(input.orderIdentifier ?? "");
     const issueDescription = String(input.issueDescription ?? "");
+    const customerEmail = String(input.customerEmail ?? "");
     // Deliberately not a Shopify mutation -- this is a demo running on a
     // real store anyone can reach from the public site, so nothing here
     // actually refunds or replaces the order. It logs a case number a
     // human would action, same trust boundary as the voice agent's
-    // destructive-action tools.
+    // destructive-action tools. The confirmation email is the real,
+    // tangible part of this action instead.
     const caseId = `RC-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     console.log(`[open_replacement_case] ${caseId} for ${orderIdentifier}: ${issueDescription}`);
+
+    const emailSent = customerEmail
+      ? await sendReplacementCaseEmail({ to: customerEmail, caseId, orderIdentifier, issueDescription })
+      : false;
+
     return {
       caseId,
       orderIdentifier,
       issueDescription,
       status: "logged_for_human_review",
-      note: "This case was logged, not actioned -- no refund or replacement was issued automatically. A team member completes it from here.",
+      emailSent,
+      note: emailSent
+        ? "This case was logged and a confirmation email was sent -- no refund or replacement was issued automatically. A team member completes it from here."
+        : "This case was logged, not actioned -- no refund or replacement was issued automatically, and the confirmation email could not be sent. A team member completes it from here.",
     };
   }
 

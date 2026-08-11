@@ -126,6 +126,7 @@ export const agents: Agent[] = [
           "It's order #1001",
           "Sure, let's switch to voice mode",
           "Here's a photo of the damage (attach an image with the paperclip icon)",
+          "It's [your email address]",
           "Yeah, a replacement works. Actually, while I'm here, do you have a camera for my front porch?",
         ],
       },
