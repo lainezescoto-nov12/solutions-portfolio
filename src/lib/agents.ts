@@ -86,6 +86,11 @@ export const agents: Agent[] = [
       {
         label: "Browse a category",
         prompt: "\"What types of cameras do you have?\"",
+        followUps: [
+          "Let's do a setup for indoors, please",
+          "Battery-powered, please",
+          "Let's still go with the Indoor Pan Cam, that's fine",
+        ],
       },
       {
         label: "Troubleshooting",
