@@ -1,6 +1,6 @@
 const stats = [
-  { value: "3", label: "AI agents, live and in-progress" },
-  { value: "10", label: "MCP tools wired on the voice agent" },
+  { value: "2", label: "AI agents, live" },
+  { value: "11", label: "MCP tools wired on the voice agent" },
   { value: "2", label: "Languages handled end-to-end" },
   { value: "100%", label: "Click-and-try, no sales call required" },
 ];
