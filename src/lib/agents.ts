@@ -18,6 +18,9 @@ export type SamplePrompt = {
   // testable without them needing a real damaged product on hand.
   attachmentUrl?: string;
   attachmentLabel?: string;
+  // Secondary use cases start collapsed behind a dropdown arrow so the
+  // panel leads with the headline flows instead of a long flat list.
+  defaultCollapsed?: boolean;
 };
 
 export type AgentStatus = "live" | "in-progress";
@@ -97,20 +100,22 @@ export const agents: Agent[] = [
       "Haven Home Tech sells smart-home devices — cameras, sensors, hubs, thermostats, and locks. You don't need to know the exact product names to try these:",
     samplePrompts: [
       {
+        label: "WISMO / damaged item",
+        prompt: "\"Hi, where's my order?\"",
+        followUps: [
+          "It's order #1001",
+          "Bad news, it showed up damaged! (drag the sample photo onto the chat, or attach it with the paperclip icon, once it offers voice mode)",
+          "Yeah, a replacement works.",
+        ],
+        attachmentUrl: "/downloads/damaged-deadbolt.png",
+        attachmentLabel: "Download a sample damaged-item photo",
+      },
+      {
         label: "Product recommendation",
         prompt: "\"I want a camera for my front porch.\"",
         followUps: [
           "Battery-powered, please",
           "No, I don't have a Home Hub Core",
-        ],
-      },
-      {
-        label: "Browse a category",
-        prompt: "\"What types of cameras do you have?\"",
-        followUps: [
-          "Let's do a setup for indoors, please",
-          "Battery-powered, please",
-          "Let's still go with the Indoor Pan Cam, that's fine",
         ],
       },
       {
@@ -123,18 +128,25 @@ export const agents: Agent[] = [
           "I checked, there are a lot of other networks nearby",
         ],
       },
-      { label: "Compatibility check", prompt: "\"I've got an old Honeywell thermostat and my HVAC system doesn't have a C-wire, would your thermostat still work for me?\"" },
-      { label: "Returns & warranty", prompt: "\"What's your return policy, and how long is the warranty?\"" },
       {
-        label: "WISMO / damaged item",
-        prompt: "\"Hi, where's my order?\"",
+        label: "Browse a category",
+        prompt: "\"What types of cameras do you have?\"",
         followUps: [
-          "It's order #1001",
-          "Bad news, it showed up damaged! (drag the sample photo onto the chat, or attach it with the paperclip icon, once it offers voice mode)",
-          "Yeah, a replacement works.",
+          "Let's do a setup for indoors, please",
+          "Battery-powered, please",
+          "Let's still go with the Indoor Pan Cam, that's fine",
         ],
-        attachmentUrl: "/downloads/damaged-deadbolt.png",
-        attachmentLabel: "Download a sample damaged-item photo",
+        defaultCollapsed: true,
+      },
+      {
+        label: "Compatibility check",
+        prompt: "\"I've got an old Honeywell thermostat and my HVAC system doesn't have a C-wire, would your thermostat still work for me?\"",
+        defaultCollapsed: true,
+      },
+      {
+        label: "Returns & warranty",
+        prompt: "\"What's your return policy, and how long is the warranty?\"",
+        defaultCollapsed: true,
       },
     ],
   },
