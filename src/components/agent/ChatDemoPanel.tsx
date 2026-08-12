@@ -88,13 +88,26 @@ function toolResultDetail(name: string, output: unknown): string {
 // server-side pipeline can. Recognition defaults to the browser's own
 // language setting. Typed messages remain fully bilingual via the system
 // prompt regardless.
+//
+// Second honest limitation, this one with no clean fix: barge-in requires
+// the mic to stay listening the whole time the AI's TTS reply is playing
+// out loud, but this app has no WebRTC-grade acoustic echo cancellation
+// pipeline. On a laptop/phone playing audio through its own speakers
+// (not headphones), the mic can pick up the AI's own voice and
+// mis-transcribe it as a user interruption. Headphones avoid this
+// entirely since the mic never hears the speaker output. A real fix would
+// mean routing playback through getUserMedia's echoCancellation
+// constraint or a reference-signal filter, which is a materially bigger
+// build than this demo's scope -- not something to fake with a fragile
+// heuristic (e.g. string-matching the live transcript against the reply
+// being spoken) that would risk swallowing genuine short interruptions.
 type SpeechRecognitionLike = {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
   onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
   onend: (() => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
   start: () => void;
   stop: () => void;
 };
@@ -365,10 +378,18 @@ export function ChatDemoPanel() {
             return;
           }
           const blob = await res.blob();
-          const audio = new Audio(URL.createObjectURL(blob));
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
           audioRef.current = audio;
-          audio.onended = finish;
-          audio.onerror = finish;
+          // Revoke only after playback ends/errors, not before -- revoking
+          // early can break in-flight playback. Without this, every voice
+          // turn pins another blob in memory for the rest of the session.
+          const finishAndRevoke = () => {
+            URL.revokeObjectURL(url);
+            finish();
+          };
+          audio.onended = finishAndRevoke;
+          audio.onerror = finishAndRevoke;
           await audio.play();
         } catch (err) {
           console.error("Voice playback failed:", err);
@@ -447,9 +468,28 @@ export function ChatDemoPanel() {
         startListening();
       }
     };
-    recognition.onerror = () => {
+    recognition.onerror = (event) => {
       setListening(false);
-      if (voiceModeOnRef.current) startListening();
+      // Auto-restarting unconditionally here used to retry forever on
+      // unrecoverable errors -- 'not-allowed' (mic permission denied) and
+      // 'audio-capture' (no working mic) never resolve themselves, so
+      // looping start()->error->start() just hammered the permission
+      // prompt / spammed the console indefinitely. Only the transient,
+      // self-resolving errors are worth auto-restarting for.
+      const recoverable = event.error === "no-speech" || event.error === "aborted" || event.error === "network";
+      if (recoverable && voiceModeOnRef.current) {
+        startListening();
+        return;
+      }
+      if (voiceModeOnRef.current) {
+        console.error(`SpeechRecognition error "${event.error}" -- exiting voice mode.`);
+        setError(
+          event.error === "not-allowed"
+            ? "Microphone access was blocked. Allow mic access in your browser to use voice mode, or keep typing."
+            : "Voice mode ran into a problem and turned off. Feel free to keep typing, or try the waveform icon again."
+        );
+        exitVoiceMode();
+      }
     };
 
     recognitionRef.current = recognition;
@@ -471,7 +511,44 @@ export function ChatDemoPanel() {
     }
   }
 
+  // Safari (especially iOS) only allows audio.play() to succeed when it's
+  // called synchronously inside a real user-gesture handler. speak()'s own
+  // play() call happens after an async TTS fetch resolves, well outside
+  // that window, so the very first spoken reply can silently fail to play
+  // on strict browsers. Playing a tiny silent clip here -- directly inside
+  // this click handler -- "unlocks" playback for the rest of the session
+  // on browsers that check for this; on browsers that don't need it, this
+  // is a harmless no-op.
+  function primeAudioPlayback() {
+    try {
+      const buffer = new ArrayBuffer(44);
+      const view = new DataView(buffer);
+      const writeString = (offset: number, s: string) => {
+        for (let i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i));
+      };
+      writeString(0, "RIFF");
+      view.setUint32(4, 36, true);
+      writeString(8, "WAVE");
+      writeString(12, "fmt ");
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, 8000, true);
+      view.setUint32(28, 8000, true);
+      view.setUint16(32, 1, true);
+      view.setUint16(34, 8, true);
+      writeString(36, "data");
+      view.setUint32(40, 0, true);
+      const audio = new Audio(URL.createObjectURL(new Blob([buffer], { type: "audio/wav" })));
+      audio.play().catch(() => {});
+    } catch {
+      // Non-critical -- worst case the first spoken reply doesn't play
+      // audio on a strict browser, everything else still works fine.
+    }
+  }
+
   function enterVoiceMode() {
+    primeAudioPlayback();
     setVoiceMode(true);
     startListening();
   }
