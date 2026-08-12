@@ -91,7 +91,7 @@ export const toolDefinitions = [
         customerEmail: {
           type: "string",
           description:
-            "The email address to send the case confirmation to. Ask the customer for this if you don't already have it (e.g. they hadn't given an email as their order identifier).",
+            "The email address to send the case confirmation to. Use the emailOnFile from check_order_status if it returned one -- that's the address on the order, no need to ask the customer to repeat it. Only ask the customer directly if check_order_status didn't return an emailOnFile.",
         },
       },
       required: ["orderIdentifier", "issueDescription", "customerEmail"],
@@ -207,6 +207,7 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
     return {
       found: true,
       orderNumber: order.name,
+      emailOnFile: order.email,
       placedAt: order.createdAt,
       fulfillmentStatus: order.fulfillmentStatus,
       paymentStatus: order.financialStatus,

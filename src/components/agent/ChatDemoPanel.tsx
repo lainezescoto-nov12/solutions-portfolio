@@ -242,6 +242,21 @@ function ProductCarousel({ products }: { products: ProductCard[] }) {
   );
 }
 
+// The system prompt allows exactly one intentional markdown case: a
+// **bolded** proactive offer (voice mode + replacement-or-refund) that
+// should visually pop out of an otherwise plain-text bubble. This is not a
+// general markdown renderer -- it only recognizes **bold** so an assistant
+// reply can never accidentally slip other formatting past it.
+function renderWithBold(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
 const INITIAL_MESSAGE: Message = {
   role: "assistant",
   content:
@@ -496,7 +511,9 @@ export function ChatDemoPanel() {
       if (voiceModeOnRef.current) {
         startListening();
         if (!muted) {
-          speak(data.reply);
+          // Strip the ** markers before TTS -- ElevenLabs would otherwise
+          // read the literal asterisks aloud instead of just emphasizing.
+          speak(data.reply.replace(/\*\*([^*]+)\*\*/g, "$1"));
         }
       }
     } catch {
@@ -589,7 +606,7 @@ export function ChatDemoPanel() {
                     className="mb-2 max-h-48 w-full rounded-lg object-cover"
                   />
                 )}
-                {m.content}
+                {m.role === "assistant" ? renderWithBold(m.content) : m.content}
               </div>
             </div>
             {m.products && m.products.length > 0 && <ProductCarousel products={m.products} />}

@@ -127,13 +127,11 @@ export const agents: Agent[] = [
       { label: "Returns & warranty", prompt: "\"What's your return policy, and how long is the warranty?\"" },
       {
         label: "WISMO / damaged item",
-        prompt: "\"Hi, where's my order? And when it showed up, it looked damaged.\"",
+        prompt: "\"Hi, where's my order?\"",
         followUps: [
           "It's order #1001",
-          "Sure, let's switch to voice mode",
-          "Here's a photo of the damage (drag it onto the chat, or attach it with the paperclip icon)",
-          "It's [your email address]",
-          "Yeah, a replacement works. Actually, while I'm here, do you have a camera for my front porch?",
+          "Bad news, it showed up damaged! (drag the sample photo onto the chat, or attach it with the paperclip icon, once it offers voice mode)",
+          "Yeah, a replacement works.",
         ],
         attachmentUrl: "/downloads/damaged-deadbolt.png",
         attachmentLabel: "Download a sample damaged-item photo",

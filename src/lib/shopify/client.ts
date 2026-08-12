@@ -75,6 +75,7 @@ async function adminGraphql<T>(query: string, variables?: Record<string, unknown
 
 export type ShopifyOrder = {
   name: string;
+  email: string | null;
   createdAt: string;
   financialStatus: string | null;
   fulfillmentStatus: string | null;
@@ -89,6 +90,7 @@ const FIND_ORDER_QUERY = /* GraphQL */ `
       edges {
         node {
           name
+          email
           createdAt
           displayFinancialStatus
           displayFulfillmentStatus
@@ -128,6 +130,7 @@ export async function findOrder(identifier: string): Promise<ShopifyOrder | null
       edges: {
         node: {
           name: string;
+          email: string | null;
           createdAt: string;
           displayFinancialStatus: string | null;
           displayFulfillmentStatus: string | null;
@@ -145,6 +148,7 @@ export async function findOrder(identifier: string): Promise<ShopifyOrder | null
 
   return {
     name: node.name,
+    email: node.email,
     createdAt: node.createdAt,
     financialStatus: node.displayFinancialStatus,
     fulfillmentStatus: node.displayFulfillmentStatus,
