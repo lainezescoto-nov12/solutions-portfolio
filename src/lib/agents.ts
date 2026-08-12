@@ -162,22 +162,26 @@ export const agents: Agent[] = [
         label: "Browse a category",
         prompt: "\"What types of cameras do you have?\"",
         followUps: [
-          "Let's do a setup for indoors, please",
           "Battery-powered, please",
+          "Let's do a setup for indoors, please",
           "Let's still go with the Indoor Pan Cam, that's fine",
         ],
         defaultCollapsed: true,
       },
-      {
-        label: "Compatibility check",
-        prompt: "\"I've got an old Honeywell thermostat and my HVAC system doesn't have a C-wire, would your thermostat still work for me?\"",
-        defaultCollapsed: true,
-      },
-      {
-        label: "Returns & warranty",
-        prompt: "\"What's your return policy, and how long is the warranty?\"",
-        defaultCollapsed: true,
-      },
+      // "Compatibility check" and "Returns & warranty" are hidden for now
+      // (not deleted -- the agent still fully supports both, just trimming
+      // what's shown while sharing this link out). Re-add them here to
+      // bring them back:
+      // {
+      //   label: "Compatibility check",
+      //   prompt: "\"I've got an old Honeywell thermostat and my HVAC system doesn't have a C-wire, would your thermostat still work for me?\"",
+      //   defaultCollapsed: true,
+      // },
+      // {
+      //   label: "Returns & warranty",
+      //   prompt: "\"What's your return policy, and how long is the warranty?\"",
+      //   defaultCollapsed: true,
+      // },
     ],
   },
   {
