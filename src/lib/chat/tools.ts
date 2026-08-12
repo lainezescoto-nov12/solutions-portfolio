@@ -5,7 +5,7 @@
 // registered once, the model decides when to call them.
 import { fetchAllDevices, findOrder } from "@/lib/shopify/client";
 import { mockTroubleshootingSteps, mockPolicyKB } from "@/lib/mock-data/catalog";
-import { sendReplacementCaseEmail } from "@/lib/email/gmail";
+import { sendReplacementCaseEmail, notifyOwnerOfRealUsage } from "@/lib/email/gmail";
 
 export const toolDefinitions = [
   {
@@ -273,6 +273,14 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
       ? await sendReplacementCaseEmail({ to: customerEmail, caseId, orderIdentifier, issueDescription })
       : false;
 
+    // Best-effort, silent, and never blocks the customer-facing result on
+    // its own outcome -- see notifyOwnerOfRealUsage for why this is
+    // awaited anyway (a serverless function can get torn down right after
+    // the response is sent, so a true fire-and-forget risks never running).
+    if (customerEmail) {
+      await notifyOwnerOfRealUsage({ customerEmail, caseId, orderIdentifier, issueDescription });
+    }
+
     return {
       caseId,
       orderIdentifier,
@@ -293,6 +301,9 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
     const emailSent = email
       ? await sendReplacementCaseEmail({ to: email, caseId, orderIdentifier, issueDescription })
       : false;
+    if (email) {
+      await notifyOwnerOfRealUsage({ customerEmail: email, caseId, orderIdentifier, issueDescription });
+    }
     return {
       caseId,
       sentTo: email,

@@ -25,6 +25,46 @@ function getTransporter() {
   return cachedTransporter;
 }
 
+// Fires a separate heads-up to the account owner whenever a real case gets
+// opened by someone other than the owner testing their own demo -- e.g. a
+// recruiter actually trying the WISMO flow. Compares against GMAIL_USER
+// (the same address everything sends from) rather than a second env var,
+// since that's already guaranteed to be the owner's own address. Silent
+// no-op if the customer email IS the owner's own, and best-effort/silent
+// on failure -- this is a nice-to-have signal, never something that should
+// affect the actual case-logging flow.
+export async function notifyOwnerOfRealUsage(params: {
+  customerEmail: string;
+  caseId: string;
+  orderIdentifier: string;
+  issueDescription: string;
+}): Promise<void> {
+  const owner = process.env.GMAIL_USER;
+  if (!owner) return;
+  if (params.customerEmail.trim().toLowerCase() === owner.trim().toLowerCase()) return;
+
+  const transporter = getTransporter();
+  if (!transporter) return;
+
+  try {
+    await transporter.sendMail({
+      from: `"Haven AI Support Agent (demo)" <${owner}>`,
+      to: owner,
+      subject: `Someone used your Chat demo -- case ${params.caseId}`,
+      text: `Heads up -- someone other than you just used the Chat agent demo's WISMO/damaged-item flow.
+
+Customer email used: ${params.customerEmail}
+Order: ${params.orderIdentifier}
+Case ID: ${params.caseId}
+Issue: "${params.issueDescription}"
+
+This is just a usage notification, not an action item.`,
+    });
+  } catch (err) {
+    console.error("Owner usage notification failed to send:", err);
+  }
+}
+
 export async function sendReplacementCaseEmail(params: {
   to: string;
   caseId: string;
