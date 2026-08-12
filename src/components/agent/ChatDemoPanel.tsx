@@ -307,6 +307,14 @@ export function ChatDemoPanel() {
   // value that's always current rather than whatever voiceModeOn was
   // when the closure was created.
   const voiceModeOnRef = useRef(false);
+  // Guards send() against actually running twice for the same turn. The
+  // `sending` state alone isn't enough: a typed submit and a stray voice
+  // recognition result (mic stays hot for barge-in the whole time the AI
+  // is talking, see startListening()) can both read a stale `sending`
+  // closure as false in the same tick, both pass the guard, and both fire
+  // -- producing two assistant replies with overlapping TTS playback. A
+  // ref updates synchronously, so the second caller always sees the lock.
+  const sendingRef = useRef(false);
 
   function setVoiceMode(on: boolean) {
     voiceModeOnRef.current = on;
@@ -377,6 +385,24 @@ export function ChatDemoPanel() {
     if (!voiceModeOnRef.current) return;
     const SpeechRecognitionCtor = getSpeechRecognition();
     if (!SpeechRecognitionCtor) return;
+
+    // A previous instance may still be technically alive here (its own
+    // onend hasn't fired yet) if this call came from send()'s "listen
+    // again" step right after a result -- detach its handlers before
+    // replacing it so it can't also fire onresult/onend and trigger a
+    // second, overlapping listen cycle.
+    if (recognitionRef.current) {
+      const prev = recognitionRef.current;
+      prev.onresult = null;
+      prev.onend = null;
+      prev.onerror = null;
+      try {
+        prev.stop();
+      } catch {
+        // Already stopped/never started -- nothing to clean up.
+      }
+      recognitionRef.current = null;
+    }
 
     const recognition = new SpeechRecognitionCtor();
     recognition.lang = navigator.language || "en-US";
@@ -475,7 +501,8 @@ export function ChatDemoPanel() {
   async function send(text: string) {
     const trimmed = text.trim();
     const attachedImage = pendingImage ?? undefined;
-    if ((!trimmed && !attachedImage) || sending) return;
+    if ((!trimmed && !attachedImage) || sendingRef.current) return;
+    sendingRef.current = true;
 
     const nextMessages: Message[] = [
       ...messagesRef.current,
@@ -533,6 +560,7 @@ export function ChatDemoPanel() {
     } catch {
       setError("Couldn't reach the chat backend.");
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   }

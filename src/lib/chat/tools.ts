@@ -97,6 +97,33 @@ export const toolDefinitions = [
       required: ["orderIdentifier", "issueDescription", "customerEmail"],
     },
   },
+  {
+    name: "resend_case_confirmation_email",
+    description:
+      "Re-send the confirmation email for a case that was already logged via open_replacement_case, to a different email address than the one it originally went to. Only call this after open_replacement_case, and only if the customer explicitly asks for the confirmation to go somewhere else -- this does not create a new case or change the case ID, it just sends the same confirmation to a new address.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        caseId: {
+          type: "string",
+          description: "The caseId returned by the earlier open_replacement_case call in this conversation -- reuse it exactly, don't invent a new one.",
+        },
+        orderIdentifier: {
+          type: "string",
+          description: "The same order identifier used in the earlier open_replacement_case call.",
+        },
+        issueDescription: {
+          type: "string",
+          description: "The same issue summary used in the earlier open_replacement_case call.",
+        },
+        email: {
+          type: "string",
+          description: "The new email address the customer wants the confirmation sent to.",
+        },
+      },
+      required: ["caseId", "orderIdentifier", "issueDescription", "email"],
+    },
+  },
 ] as const;
 
 // Normalizes hyphens to spaces before splitting so a tag like
@@ -252,6 +279,24 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
       note: emailSent
         ? "This case was logged and a confirmation email was sent -- no refund or replacement was issued automatically. A team member completes it from here."
         : "This case was logged, not actioned -- no refund or replacement was issued automatically, and the confirmation email could not be sent. A team member completes it from here.",
+    };
+  }
+
+  if (name === "resend_case_confirmation_email") {
+    const caseId = String(input.caseId ?? "");
+    const orderIdentifier = String(input.orderIdentifier ?? "");
+    const issueDescription = String(input.issueDescription ?? "");
+    const email = String(input.email ?? "");
+    const emailSent = email
+      ? await sendReplacementCaseEmail({ to: email, caseId, orderIdentifier, issueDescription })
+      : false;
+    return {
+      caseId,
+      sentTo: email,
+      emailSent,
+      note: emailSent
+        ? "Confirmation re-sent to the new email address."
+        : "Could not send the confirmation to that email address.",
     };
   }
 

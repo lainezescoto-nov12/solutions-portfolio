@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { SamplePrompt } from "@/lib/agents";
+import type { FollowUp, SamplePrompt } from "@/lib/agents";
 
 // Prompt strings are stored with their display quotes baked in (e.g.
 // `"I want a camera..."`) so they read naturally in the list -- strip
@@ -106,13 +106,20 @@ function PromptItem({ p, showCopyButtons }: { p: SamplePrompt; showCopyButtons: 
                 It&apos;ll ask one thing at a time — reply with these, in order
               </p>
               <ol className="mt-2 space-y-1.5">
-                {p.followUps.map((f, i) => (
-                  <li key={i} className="flex items-start gap-1.5">
-                    <span className="mt-px text-sm text-neutral-400">{i + 1}.</span>
-                    <span className="flex-1 text-sm text-neutral-600">&ldquo;{f}&rdquo;</span>
-                    {showCopyButtons && <CopyButton text={f} />}
-                  </li>
-                ))}
+                {p.followUps.map((f: FollowUp, i) => {
+                  const text = typeof f === "string" ? f : f.text;
+                  const note = typeof f === "string" ? undefined : f.note;
+                  return (
+                    <li key={i}>
+                      <div className="flex items-start gap-1.5">
+                        <span className="mt-px text-sm text-neutral-400">{i + 1}.</span>
+                        <span className="flex-1 text-sm text-neutral-600">&ldquo;{text}&rdquo;</span>
+                        {showCopyButtons && <CopyButton text={text} />}
+                      </div>
+                      {note && <p className="pl-5 text-xs italic text-neutral-400">{note}</p>}
+                    </li>
+                  );
+                })}
               </ol>
             </div>
           )}

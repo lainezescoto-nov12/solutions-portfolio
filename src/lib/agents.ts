@@ -5,13 +5,19 @@ export type AgentStat = {
   linkLabel?: string;
 };
 
+// A follow-up line is either just the text to copy/paste, or that text
+// plus a short non-copyable note underneath it (e.g. a UI hint) -- kept
+// separate so the copy button only ever copies the actual scripted line,
+// never the instructional aside.
+export type FollowUp = string | { text: string; note?: string };
+
 export type SamplePrompt = {
   label: string;
   prompt: string;
   // Optional answer key for multi-turn flows (e.g. troubleshooting, which
   // now paces one step at a time) -- what to say back at each step so
   // someone testing it isn't stuck guessing after the first exchange.
-  followUps?: string[];
+  followUps?: FollowUp[];
   // Optional sample file (e.g. a damaged-item photo for the WISMO flow) --
   // a public/ path a visitor can download, then drag onto the chat or
   // attach via the paperclip, so a flow that expects a photo is actually
@@ -116,8 +122,12 @@ export const agents: Agent[] = [
         prompt: "\"Hi, where's my order?\"",
         followUps: [
           "It's order #1001",
-          "Bad news, it showed up damaged! (drag the sample photo onto the chat, or attach it with the paperclip icon, once it offers voice mode)",
+          {
+            text: "Bad news, my deadbolt is damaged!",
+            note: "Once it offers voice mode, attach the sample photo with the paperclip icon.",
+          },
           "Yeah, a replacement works.",
+          "Can you please send the confirmation email to [drop your email here, or a recruiter's]",
         ],
         attachmentUrl: "/downloads/damaged-deadbolt.png",
         attachmentLabel: "Download a sample damaged-item photo",
