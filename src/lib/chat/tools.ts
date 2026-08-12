@@ -5,7 +5,7 @@
 // registered once, the model decides when to call them.
 import { fetchAllDevices, findOrder } from "@/lib/shopify/client";
 import { mockTroubleshootingSteps, mockPolicyKB } from "@/lib/mock-data/catalog";
-import { sendReplacementCaseEmail } from "@/lib/email/resend";
+import { sendReplacementCaseEmail } from "@/lib/email/gmail";
 
 export const toolDefinitions = [
   {
