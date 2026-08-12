@@ -94,7 +94,7 @@ export const agents: Agent[] = [
     status: "in-progress",
     statusLabel: "In progress",
     summary:
-      "Type to it, or click the waveform and just talk — same agent either way. Tell it an order arrived damaged and it doesn't wait to be asked: it apologizes, offers to switch to voice so you can show it the photo, and asks replacement or refund before you get the chance to. Product recommendations and order lookups run against a real Shopify store's live data, not a mock.",
+      "A customer's order shows up damaged. Before they can even ask what happens next, the agent is already apologizing, offering to switch to a live voice conversation so it can see the damage for itself, and asking whether they'd rather have a replacement or a refund — nobody had to walk it through any of that. Type it out or just start talking mid-conversation and it doesn't miss a beat, because underneath, it's reading from a real, live Shopify store, not a script.",
     stats: [
       { label: "Use cases", value: "3" },
       {
