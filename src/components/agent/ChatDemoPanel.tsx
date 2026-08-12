@@ -439,7 +439,21 @@ export function ChatDemoPanel() {
 
     recognitionRef.current = recognition;
     setListening(true);
-    recognition.start();
+    try {
+      recognition.start();
+    } catch (err) {
+      // Browsers can throw synchronously (InvalidStateError) if a new
+      // recognition session starts before the previous one has fully torn
+      // down its hold on the microphone -- this was the actual cause of
+      // barge-in going dead: the auto-restart-on-silence-timeout cycle
+      // (below) could fire mid-reply, throw here, and leave voice mode
+      // silently listening to nothing for the rest of that turn. Retry
+      // shortly instead of leaving it stuck.
+      console.error("SpeechRecognition failed to start, retrying:", err);
+      recognitionRef.current = null;
+      setListening(false);
+      if (voiceModeOnRef.current) setTimeout(startListening, 250);
+    }
   }
 
   function enterVoiceMode() {
