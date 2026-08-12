@@ -94,7 +94,7 @@ export const agents: Agent[] = [
     status: "in-progress",
     statusLabel: "In progress",
     summary:
-      "A customer's order shows up damaged. Before they can even ask what happens next, the agent is already apologizing, offering to switch to a live voice conversation so it can see the damage for itself, and asking whether they'd rather have a replacement or a refund — nobody had to walk it through any of that. Type it out or just start talking mid-conversation and it doesn't miss a beat, because underneath, it's reading from a real, live Shopify store, not a script.",
+      "A chat agent for a smart-home device company, built to handle where's-my-order questions, product recommendations, and troubleshooting. Chat with it, or click the waveform to just talk — either way, it's answering from a real Shopify store's live data and a curated knowledge base in Notion, not a script.",
     stats: [
       { label: "Use cases", value: "3" },
       {
