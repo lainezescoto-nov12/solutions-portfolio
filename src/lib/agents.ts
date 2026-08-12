@@ -122,6 +122,7 @@ export const agents: Agent[] = [
         prompt: "\"Hi, where's my order?\"",
         followUps: [
           "It's order #1001",
+          "Let me check my front door real quick.",
           {
             text: "Bad news, my deadbolt is damaged!",
             note: "Once it offers voice mode, attach the sample photo with the paperclip icon.",

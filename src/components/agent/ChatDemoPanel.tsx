@@ -517,16 +517,37 @@ export function ChatDemoPanel() {
     setLastToolCalls([]);
 
     try {
+      // Every request resends the full conversation, and an attached photo
+      // is a multi-MB base64 data URL -- keep it on only the newest
+      // message. Older turns keep their image in local UI state (so the
+      // thumbnail stays visible if you scroll back) but get stripped from
+      // what's actually sent, once Claude has already looked at it, so the
+      // payload doesn't keep growing every subsequent turn and eventually
+      // 413 the request.
+      const payloadMessages = nextMessages.map((m, i) =>
+        m.image && i !== nextMessages.length - 1
+          ? { ...m, image: undefined, content: m.content || "(shared a photo of the damage, already reviewed)" }
+          : m
+      );
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: nextMessages }),
+        body: JSON.stringify({ messages: payloadMessages }),
       });
-      const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong.");
+        // A non-2xx (e.g. a 413 from an oversized payload) isn't
+        // guaranteed to have a JSON body -- Vercel's own platform-level
+        // error pages are plain text/HTML, and .json() would throw and
+        // fall into the catch block below instead of here.
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? `Something went wrong (${res.status}).`);
+        // Without this, a failed request left voice mode's mic dead until
+        // the waveform was toggled off and back on -- resuming listening
+        // on failure too means the customer can just try again by speaking.
+        if (voiceModeOnRef.current) startListening();
         return;
       }
+      const data = await res.json();
       const calls: ToolCall[] = (data.toolCalls ?? []).map(
         (c: { name: string; input: unknown; output: unknown }) => ({
           ...c,
@@ -559,6 +580,7 @@ export function ChatDemoPanel() {
       }
     } catch {
       setError("Couldn't reach the chat backend.");
+      if (voiceModeOnRef.current) startListening();
     } finally {
       sendingRef.current = false;
       setSending(false);
