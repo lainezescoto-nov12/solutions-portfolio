@@ -91,8 +91,8 @@ export const agents: Agent[] = [
     name: "Chat",
     industry: "Haven Home Tech — Smart Home / IoT",
     tagline: "A chat AI agent that provides product recommendations and troubleshooting guidance, and switches into a hands-free voice mode you can talk over like a real conversation.",
-    status: "in-progress",
-    statusLabel: "In progress",
+    status: "live",
+    statusLabel: "Live — deployed on Vercel",
     summary:
       "A chat agent for a smart-home device company, built to handle where's-my-order questions, product recommendations, and troubleshooting. Chat with it, or click the waveform to just talk — either way, it's answering from a real Shopify store's live data and a curated knowledge base in Notion, not a script.",
     stats: [
