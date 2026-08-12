@@ -12,6 +12,12 @@ export type SamplePrompt = {
   // now paces one step at a time) -- what to say back at each step so
   // someone testing it isn't stuck guessing after the first exchange.
   followUps?: string[];
+  // Optional sample file (e.g. a damaged-item photo for the WISMO flow) --
+  // a public/ path a visitor can download, then drag onto the chat or
+  // attach via the paperclip, so a flow that expects a photo is actually
+  // testable without them needing a real damaged product on hand.
+  attachmentUrl?: string;
+  attachmentLabel?: string;
 };
 
 export type AgentStatus = "live" | "in-progress";
@@ -125,10 +131,12 @@ export const agents: Agent[] = [
         followUps: [
           "It's order #1001",
           "Sure, let's switch to voice mode",
-          "Here's a photo of the damage (attach an image with the paperclip icon)",
+          "Here's a photo of the damage (drag it onto the chat, or attach it with the paperclip icon)",
           "It's [your email address]",
           "Yeah, a replacement works. Actually, while I'm here, do you have a camera for my front porch?",
         ],
+        attachmentUrl: "/downloads/damaged-deadbolt.png",
+        attachmentLabel: "Download a sample damaged-item photo",
       },
     ],
   },

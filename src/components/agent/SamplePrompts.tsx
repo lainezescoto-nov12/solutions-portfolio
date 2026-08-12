@@ -14,6 +14,15 @@ export function SamplePrompts({ prompts, intro }: { prompts: SamplePrompt[]; int
               {p.label}
             </p>
             <p className="mt-1.5 text-[15px] leading-relaxed text-neutral-700">{p.prompt}</p>
+            {p.attachmentUrl && (
+              <a
+                href={p.attachmentUrl}
+                download
+                className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-neutral-500 underline decoration-neutral-300 underline-offset-2 transition hover:text-neutral-900"
+              >
+                {p.attachmentLabel ?? "Download sample attachment"} ↓
+              </a>
+            )}
             {p.followUps && p.followUps.length > 0 && (
               <div className="mt-3 rounded-xl border border-neutral-200 bg-white p-4">
                 <p className="text-[10px] font-medium uppercase tracking-wide text-neutral-400">

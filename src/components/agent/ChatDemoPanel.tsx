@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
 
 type ProductCard = { id: string; title: string; priceUsd: number; imageUrl: string | null };
 // `image`, when present, is a data URL of a photo the customer attached
@@ -260,6 +260,8 @@ export function ChatDemoPanel() {
   const [voiceModeOn, setVoiceModeOn] = useState(false);
   const [muted, setMuted] = useState(false);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const dragCounterRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -417,6 +419,30 @@ export function ChatDemoPanel() {
     reader.readAsDataURL(file);
   }
 
+  // Counter, not a boolean, because dragging over child elements fires
+  // enter/leave pairs on each of them too -- without counting, the overlay
+  // would flicker off every time the pointer crosses a message bubble.
+  function handleDragEnter(e: DragEvent) {
+    e.preventDefault();
+    if (!e.dataTransfer.types.includes("Files")) return;
+    dragCounterRef.current += 1;
+    setDragActive(true);
+  }
+
+  function handleDragLeave(e: DragEvent) {
+    e.preventDefault();
+    dragCounterRef.current = Math.max(0, dragCounterRef.current - 1);
+    if (dragCounterRef.current === 0) setDragActive(false);
+  }
+
+  function handleDrop(e: DragEvent) {
+    e.preventDefault();
+    dragCounterRef.current = 0;
+    setDragActive(false);
+    const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith("image/"));
+    handleImageSelect(file);
+  }
+
   async function send(text: string) {
     const trimmed = text.trim();
     const attachedImage = pendingImage ?? undefined;
@@ -481,7 +507,18 @@ export function ChatDemoPanel() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-260px)] min-h-[640px] max-h-[820px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg shadow-neutral-200/60">
+    <div
+      onDragEnter={handleDragEnter}
+      onDragOver={(e) => e.preventDefault()}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className="relative flex h-[calc(100vh-260px)] min-h-[640px] max-h-[820px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg shadow-neutral-200/60"
+    >
+      {dragActive && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl border-2 border-dashed border-blue-400 bg-blue-50/90">
+          <p className="text-sm font-medium text-blue-600">Drop the photo to attach it</p>
+        </div>
+      )}
       <div
         className="flex items-center justify-between gap-2.5 px-5 py-3.5"
         style={{ background: "linear-gradient(135deg, #146EF5 0%, #0a2472 100%)" }}
