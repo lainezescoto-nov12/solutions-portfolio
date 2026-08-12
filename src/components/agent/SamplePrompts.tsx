@@ -67,7 +67,7 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function PromptItem({ p }: { p: SamplePrompt }) {
+function PromptItem({ p, showCopyButtons }: { p: SamplePrompt; showCopyButtons: boolean }) {
   const [open, setOpen] = useState(!p.defaultCollapsed);
 
   return (
@@ -89,7 +89,7 @@ function PromptItem({ p }: { p: SamplePrompt }) {
         <>
           <div className="mt-1.5 flex items-start gap-1.5">
             <p className="text-[15px] leading-relaxed text-neutral-700">{p.prompt}</p>
-            <CopyButton text={stripQuotes(p.prompt)} />
+            {showCopyButtons && <CopyButton text={stripQuotes(p.prompt)} />}
           </div>
           {p.attachmentUrl && (
             <a
@@ -110,7 +110,7 @@ function PromptItem({ p }: { p: SamplePrompt }) {
                   <li key={i} className="flex items-start gap-1.5">
                     <span className="mt-px text-sm text-neutral-400">{i + 1}.</span>
                     <span className="flex-1 text-sm text-neutral-600">&ldquo;{f}&rdquo;</span>
-                    <CopyButton text={f} />
+                    {showCopyButtons && <CopyButton text={f} />}
                   </li>
                 ))}
               </ol>
@@ -122,7 +122,15 @@ function PromptItem({ p }: { p: SamplePrompt }) {
   );
 }
 
-export function SamplePrompts({ prompts, intro }: { prompts: SamplePrompt[]; intro?: string }) {
+export function SamplePrompts({
+  prompts,
+  intro,
+  showCopyButtons = true,
+}: {
+  prompts: SamplePrompt[];
+  intro?: string;
+  showCopyButtons?: boolean;
+}) {
   return (
     <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-8">
       <p className="text-base font-semibold text-neutral-950">
@@ -131,7 +139,7 @@ export function SamplePrompts({ prompts, intro }: { prompts: SamplePrompt[]; int
       {intro && <p className="mt-2.5 text-sm leading-relaxed text-neutral-500">{intro}</p>}
       <ul className="mt-6 space-y-6">
         {prompts.map((p) => (
-          <PromptItem key={p.label} p={p} />
+          <PromptItem key={p.label} p={p} showCopyButtons={showCopyButtons} />
         ))}
       </ul>
     </div>

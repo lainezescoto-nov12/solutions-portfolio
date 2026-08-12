@@ -61,10 +61,22 @@ export const agents: Agent[] = [
     samplePrompts: [
       { label: "FAQ + booking", prompt: "\"What are your service department hours? I'd like to book a test drive for a Toyota Tundra — do you have anything open tomorrow?\"" },
       { label: "Reschedule an existing booking", prompt: "\"Hi, I need to move my appointment to a different time.\"" },
-      { label: "Reschedule, cold call", prompt: "\"Hi, I think I have a test drive booked but I don't have the confirmation handy — can you move it to Friday?\"" },
       { label: "Cancel an appointment", prompt: "\"I need to cancel my appointment for Friday.\"" },
-      { label: "Parts availability", prompt: "\"Do you have brake pads in stock for a 2019 Toyota Camry?\"" },
-      { label: "Vehicle lookup", prompt: "\"Is there a recall on my Hyundai Tucson? The VIN is K M 8 J 3 C A 4 6 L U 0 0 0 0 0 1.\"" },
+      {
+        label: "Reschedule, cold call",
+        prompt: "\"Hi, I think I have a test drive booked but I don't have the confirmation handy — can you move it to Friday?\"",
+        defaultCollapsed: true,
+      },
+      {
+        label: "Parts availability",
+        prompt: "\"Do you have brake pads in stock for a 2019 Toyota Camry?\"",
+        defaultCollapsed: true,
+      },
+      {
+        label: "Vehicle lookup",
+        prompt: "\"Is there a recall on my Hyundai Tucson? The VIN is K M 8 J 3 C A 4 6 L U 0 0 0 0 0 1.\"",
+        defaultCollapsed: true,
+      },
     ],
     externalUrl: "tel:+19843889822",
   },

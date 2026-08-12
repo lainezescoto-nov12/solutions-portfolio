@@ -321,7 +321,7 @@ export function InboundCallModal({
         {/* Right: the same sample prompts as the page, kept fully
             legible and scrollable independently of the call panel. */}
         <div className="flex-1 overflow-y-auto bg-neutral-50 p-6 sm:w-1/2 sm:flex-none sm:p-8">
-          <SamplePrompts prompts={prompts} />
+          <SamplePrompts prompts={prompts} showCopyButtons={false} />
         </div>
       </div>
     </div>
