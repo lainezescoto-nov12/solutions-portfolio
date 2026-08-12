@@ -152,6 +152,10 @@ export const agents: Agent[] = [
           "Yes, about 15 feet away with one wall between them",
           "Okay, I did that, it's blinking blue now",
           "I checked, there are a lot of other networks nearby",
+          {
+            text: "Okay, I switched it to channel 6. It's been solid for a few hours now, that fixed it!",
+            note: "This is the last KB step, so this line is what closes the flow out.",
+          },
         ],
       },
       {

@@ -174,14 +174,17 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
     });
 
     const topScore = Math.max(0, ...scored.map((s) => s.score));
-    // Only return devices actually competitive with the best match --
-    // previously this returned the top 5 regardless of score, which meant
-    // a specific query (e.g. a battery-powered front-porch camera) still
-    // surfaced the thermostat, lock, and sensor because generic words
-    // ("hub", "powered", "no") show up in most products' tags. A real
-    // match should win clearly, not just edge out the rest.
+    // Only return devices tied for the actual best score -- a `topScore -
+    // 1` tolerance band used to be here to catch near-ties, but it was
+    // wide enough that a lock or a door sensor sharing one generic tag
+    // with the winning camera (e.g. "battery-powered") could still score
+    // only 1 point behind it and sneak into the results ("camera for my
+    // porch" returning a deadbolt lock). productType is weighted 3x
+    // specifically so a genuine category match should win outright, not
+    // just edge out the field -- exact ties (e.g. several real cameras for
+    // "what cameras do you have") still come through fine this way.
     const matches = scored
-      .filter((s) => topScore > 0 && s.score >= topScore - 1)
+      .filter((s) => topScore > 0 && s.score === topScore)
       .sort((a, b) => b.score - a.score)
       .slice(0, 5)
       .map((s) => s.device);
