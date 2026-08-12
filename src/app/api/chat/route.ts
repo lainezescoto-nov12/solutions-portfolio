@@ -62,6 +62,31 @@ function toAnthropicContent(m: ChatMessage): Anthropic.MessageParam["content"] {
   return blocks;
 }
 
+// There's no chat transcript persistence anywhere in this app -- each
+// conversation only ever lives in the browser's local state. This is the
+// one place a full turn gets written down anywhere, as a single
+// structured JSON line to stdout, which Vercel captures as the
+// deployment's function logs (viewable via `vercel logs <url>` or the
+// project's Logs tab in the dashboard). Deliberately not a database: this
+// is for pulling up a specific conversation after a bug report, not a
+// feature anything in the app reads back, so Vercel's own log retention
+// is enough without standing up new infra. Image data URLs are replaced
+// with a size marker instead of logged in full -- a multi-MB base64
+// string per turn would make the logs unreadable and needlessly costly to
+// store, and the image content itself isn't the useful part for debugging
+// a conversation-flow issue.
+function summarizeMessageForLog(m: ChatMessage) {
+  return {
+    role: m.role,
+    content: m.content,
+    image: m.image ? `[image attached, ${m.image.length} chars]` : undefined,
+  };
+}
+
+function logChatTurn(event: string, requestId: string, data: Record<string, unknown>) {
+  console.log(JSON.stringify({ event, requestId, timestamp: new Date().toISOString(), ...data }));
+}
+
 export async function POST(request: Request) {
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -71,6 +96,7 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as { messages: ChatMessage[] };
     const client = new Anthropic({ apiKey });
+    const requestId = crypto.randomUUID();
 
     const messages: Anthropic.MessageParam[] = body.messages.map((m) => ({
       role: m.role,
@@ -96,6 +122,11 @@ export async function POST(request: Request) {
           .filter((block): block is Anthropic.TextBlock => block.type === "text")
           .map((block) => block.text)
           .join("\n");
+        logChatTurn("chat_turn", requestId, {
+          messages: body.messages.map(summarizeMessageForLog),
+          reply: text,
+          toolCalls,
+        });
         return NextResponse.json({ reply: text, toolCalls });
       }
 
@@ -125,6 +156,11 @@ export async function POST(request: Request) {
       messages.push({ role: "user", content: toolResults });
     }
 
+    logChatTurn("chat_turn_incomplete", requestId, {
+      messages: body.messages.map(summarizeMessageForLog),
+      toolCalls,
+      error: "Too many tool-use rounds without a final answer.",
+    });
     return NextResponse.json(
       { error: "Too many tool-use rounds without a final answer." },
       { status: 500 }
