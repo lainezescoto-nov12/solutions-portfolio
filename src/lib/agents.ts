@@ -128,7 +128,10 @@ export const agents: Agent[] = [
             note: "Once it offers voice mode, attach the sample photo with the paperclip icon.",
           },
           "Yeah, a replacement works.",
-          "Can you please send the confirmation email to [drop your email here, or a recruiter's]",
+          {
+            text: "Can you please send the confirmation email to [drop your email here]",
+            note: "Check your spam folder if it doesn't show up in a minute.",
+          },
         ],
         attachmentUrl: "/downloads/damaged-deadbolt.png",
         attachmentLabel: "Download a sample damaged-item photo",

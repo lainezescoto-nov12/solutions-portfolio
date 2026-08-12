@@ -289,6 +289,21 @@ export function ChatDemoPanel() {
   const [voiceModeOn, setVoiceModeOn] = useState(false);
   const [muted, setMuted] = useState(false);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
+  // Same stale-closure problem messagesRef solves for `messages`: once
+  // voice mode is chaining send() -> startListening() -> a new
+  // recognition's onresult -> send() across turns, each of those
+  // closures was captured at whatever render was active when it was
+  // created, so a plain `pendingImage` read inside send() kept re-reading
+  // whichever image was attached the FIRST time that closure chain was
+  // built -- reattaching the same photo to every later voice message
+  // even after it had already been sent and the UI showed no pending
+  // photo. A ref always reads the live value regardless of which render's
+  // closure is asking.
+  const pendingImageRef = useRef<string | null>(null);
+  function setPendingImageBoth(v: string | null) {
+    pendingImageRef.current = v;
+    setPendingImage(v);
+  }
   const [dragActive, setDragActive] = useState(false);
   const dragCounterRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -476,14 +491,14 @@ export function ChatDemoPanel() {
     setLastToolCalls([]);
     setError("");
     setInput("");
-    setPendingImage(null);
+    setPendingImageBoth(null);
   }
 
   function handleImageSelect(file: File | undefined) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      if (typeof reader.result === "string") setPendingImage(reader.result);
+      if (typeof reader.result === "string") setPendingImageBoth(reader.result);
     };
     reader.readAsDataURL(file);
   }
@@ -514,7 +529,7 @@ export function ChatDemoPanel() {
 
   async function send(text: string) {
     const trimmed = text.trim();
-    const attachedImage = pendingImage ?? undefined;
+    const attachedImage = pendingImageRef.current ?? undefined;
     if ((!trimmed && !attachedImage) || sendingRef.current) return;
     sendingRef.current = true;
 
@@ -525,7 +540,7 @@ export function ChatDemoPanel() {
     messagesRef.current = nextMessages;
     setMessages(nextMessages);
     setInput("");
-    setPendingImage(null);
+    setPendingImageBoth(null);
     setSending(true);
     setError("");
     setLastToolCalls([]);
@@ -745,7 +760,7 @@ export function ChatDemoPanel() {
             </div>
             <button
               type="button"
-              onClick={() => setPendingImage(null)}
+              onClick={() => setPendingImageBoth(null)}
               className="text-xs font-medium text-neutral-400 transition hover:text-neutral-700"
             >
               Remove photo
