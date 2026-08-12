@@ -18,7 +18,7 @@ export const mockTroubleshootingSteps: TroubleshootingStep[] = [
       "Check the sensor's battery level in the app.",
       "Confirm it's within 30ft of the Home Hub Core with no more than one wall between them.",
       "Re-pair the sensor by holding its button for 5 seconds until it blinks blue.",
-      "If it keeps dropping, check for WiFi channel congestion on the hub's 2.4GHz band.",
+      "Once it's blinking blue, open the Haven app and tap Add Device to finish re-pairing it to the hub. Check back in a few hours to confirm it stays online.",
     ],
   },
   {
