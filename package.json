@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:chat-tools": "node scripts/test-chat-tools.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",
