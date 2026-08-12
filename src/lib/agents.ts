@@ -94,7 +94,7 @@ export const agents: Agent[] = [
     status: "in-progress",
     statusLabel: "In progress",
     summary:
-      "A chat agent for a smart-home device company covering three jobs: recommending the right product for a customer's setup, troubleshooting connectivity or pairing issues step by step, and handling a where's-my-order case end to end, including a damaged-item report with real photo analysis. Product recommendations and order lookups query a real Shopify store's live data via the Admin API — not mocked data — while troubleshooting guidance comes from a small curated knowledge base. Click the waveform icon and it becomes hands-free: browser speech recognition listens, ElevenLabs text-to-speech replies out loud, and it supports barge-in, so you can cut it off mid-sentence the way you'd interrupt a person.",
+      "Type to it, or click the waveform and just talk — same agent either way. Tell it an order arrived damaged and it doesn't wait to be asked: it apologizes, offers to switch to voice so you can show it the photo, and asks replacement or refund before you get the chance to. Product recommendations and order lookups run against a real Shopify store's live data, not a mock.",
     stats: [
       { label: "Use cases", value: "3" },
       {
