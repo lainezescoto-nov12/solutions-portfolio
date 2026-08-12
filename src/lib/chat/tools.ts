@@ -204,12 +204,21 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
         note: "No order matched that number/email in the live store. Ask the customer to double check it, but you can still continue helping with their issue.",
       };
     }
+    // Demo-only override, scoped to exactly this one order number: #1001 is
+    // the seeded WISMO/damaged-item sample order, and its tracking number
+    // is illustrative (not a real UPS shipment), so Shopify's own delivery
+    // status can never resolve to "delivered" on its own -- there's no
+    // carrier to poll. This is the single hardcoded fact in an otherwise
+    // fully live Shopify integration; every other order reports whatever
+    // Shopify's real fulfillment status actually is.
+    const deliveryStatus = order.name === "#1001" ? "Delivered" : null;
     return {
       found: true,
       orderNumber: order.name,
       emailOnFile: order.email,
       placedAt: order.createdAt,
       fulfillmentStatus: order.fulfillmentStatus,
+      deliveryStatus,
       paymentStatus: order.financialStatus,
       trackingUrl: order.trackingUrl,
       trackingNumber: order.trackingNumber,

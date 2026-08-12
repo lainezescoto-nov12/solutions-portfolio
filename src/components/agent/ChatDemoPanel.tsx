@@ -245,13 +245,27 @@ function ProductCarousel({ products }: { products: ProductCard[] }) {
 // The system prompt allows exactly one intentional markdown case: a
 // **bolded** proactive offer (voice mode + replacement-or-refund) that
 // should visually pop out of an otherwise plain-text bubble. This is not a
-// general markdown renderer -- it only recognizes **bold** so an assistant
-// reply can never accidentally slip other formatting past it.
+// general markdown renderer -- it only recognizes **bold**, plus turns raw
+// http(s) URLs (e.g. a tracking link) into real clickable links, so an
+// assistant reply can never accidentally slip other formatting past it.
 function renderWithBold(text: string) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  const parts = text.split(/(\*\*[^*]+\*\*|https?:\/\/\S+)/g);
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    if (/^https?:\/\//.test(part)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline decoration-current/40 underline-offset-2 hover:decoration-current"
+        >
+          {part}
+        </a>
+      );
     }
     return <span key={i}>{part}</span>;
   });
@@ -592,8 +606,8 @@ export function ChatDemoPanel() {
               <div
                 className={
                   m.role === "assistant"
-                    ? "max-w-[75%] rounded-2xl rounded-tl-sm bg-white px-5 py-3 text-[15px] leading-relaxed text-neutral-700 shadow-sm ring-1 ring-neutral-200"
-                    : "max-w-[75%] rounded-2xl rounded-tr-sm px-5 py-3 text-[15px] leading-relaxed text-white shadow-sm"
+                    ? "max-w-[75%] whitespace-pre-line rounded-2xl rounded-tl-sm bg-white px-5 py-3 text-[15px] leading-relaxed text-neutral-700 shadow-sm ring-1 ring-neutral-200"
+                    : "max-w-[75%] whitespace-pre-line rounded-2xl rounded-tr-sm px-5 py-3 text-[15px] leading-relaxed text-white shadow-sm"
                 }
                 style={m.role === "user" ? { backgroundColor: "#146EF5" } : undefined}
               >
