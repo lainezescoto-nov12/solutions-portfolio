@@ -98,10 +98,11 @@ async function runCase(testCase) {
   );
 
   if (missing.length > 0) {
+    const replyPreview = (data.reply ?? "").slice(0, 200);
     return {
       name: testCase.name,
       ok: false,
-      detail: `Expected [${testCase.expectTools.join(", ")}], got [${firedTools.join(", ") || "none"}]`,
+      detail: `Expected [${testCase.expectTools.join(", ")}], got [${firedTools.join(", ") || "none"}] -- reply: "${replyPreview}${(data.reply ?? "").length > 200 ? "..." : ""}"`,
     };
   }
   if (toolErrors.length > 0) {
